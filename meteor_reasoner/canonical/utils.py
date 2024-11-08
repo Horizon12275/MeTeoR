@@ -317,6 +317,7 @@ def find_periods(CR):
             # add the new facts to the dataset
             for tmp_predicate in delta_new:
                 for tmp_entity in delta_new[tmp_predicate]:
+                    # just to update index here
                     if tmp_predicate not in CR.D or tmp_entity not in CR.D[tmp_predicate]:
                         CR.D[tmp_predicate][tmp_entity] = CR.D[tmp_predicate][tmp_entity] + delta_new[tmp_predicate][tmp_entity]
                         # update index

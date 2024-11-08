@@ -17,27 +17,114 @@ class Interval:
         self.left_open = left_open
         self.right_open = right_open
 
+    # @staticmethod
+    # def list_union(intervals1, intervals2):
+    #     intervals1.sort(key=lambda k: k.left_value)
+    #     intervals2.sort(key=lambda k: k.left_value)
+    #     new_interval_list = []
+    #     if intervals1[0].left_value < intervals2[0].left_value:
+    #         for interval1 in intervals1:
+    #             for interval2 in intervals2:
+    #                 if interval2.left_value > interval1.right_value:
+    #                     break
+    #                 tmp_interval = Interval.intersection(interval1, interval2)
+    #                 if tmp_interval is not None:
+    #                     new_interval_list.append(tmp_interval)
+    #     else:
+    #         for interval1 in intervals2:
+    #             for interval2 in intervals1:
+    #                 if interval2.left_value > interval1.right_value:
+    #                     break
+    #                 tmp_interval = Interval.intersection(interval1, interval2)
+    #                 if tmp_interval is not None:
+    #                     new_interval_list.append(tmp_interval)
+    #     return new_interval_list
+
     @staticmethod
     def list_union(intervals1, intervals2):
+        """
+        Return the union of two interval lists
+        Args:
+            intervals1 (a list of Interval instances):
+            intervals2 (a list of Interval instances):
+
+        Returns:
+            a list of Interval instances
+        """
         intervals1.sort(key=lambda k: k.left_value)
         intervals2.sort(key=lambda k: k.left_value)
         new_interval_list = []
-        if intervals1[0].left_value < intervals2[0].left_value:
-            for interval1 in intervals1:
-                for interval2 in intervals2:
-                    if interval2.left_value > interval1.right_value:
-                        break
-                    tmp_interval = Interval.intersection(interval1, interval2)
-                    if tmp_interval is not None:
-                        new_interval_list.append(tmp_interval)
-        else:
-            for interval1 in intervals2:
-                for interval2 in intervals1:
-                    if interval2.left_value > interval1.right_value:
-                        break
-                    tmp_interval = Interval.intersection(interval1, interval2)
-                    if tmp_interval is not None:
-                        new_interval_list.append(tmp_interval)
+        i, j = 0, 0
+        while i < len(intervals1) and j < len(intervals2):
+            if intervals1[i].left_value < intervals2[j].left_value:
+                if len(new_interval_list) == 0:
+                    new_interval_list.append(intervals1[i])
+                else:
+                    if Interval.union(new_interval_list[-1], intervals1[i]) is not None:
+                        new_interval_list[-1] = Interval.union(new_interval_list[-1], intervals1[i])
+                    else:
+                        new_interval_list.append(intervals1[i])
+                i += 1
+            else:
+                if len(new_interval_list) == 0:
+                    new_interval_list.append(intervals2[j])
+                else:
+                    if Interval.union(new_interval_list[-1], intervals2[j]) is not None:
+                        new_interval_list[-1] = Interval.union(new_interval_list[-1], intervals2[j])
+                    else:
+                        new_interval_list.append(intervals2[j])
+                j += 1
+
+        while i < len(intervals1):
+            if Interval.union(new_interval_list[-1], intervals1[i]) is not None:
+                new_interval_list[-1] = Interval.union(new_interval_list[-1], intervals1[i])
+            else:
+                new_interval_list.append(intervals1[i])
+            i += 1
+
+        while j < len(intervals2):
+            if Interval.union(new_interval_list[-1], intervals2[j]) is not None:
+                new_interval_list[-1] = Interval.union(new_interval_list[-1], intervals2[j])
+            else:
+                new_interval_list.append(intervals2[j])
+            j += 1
+
+        return new_interval_list
+
+    @staticmethod
+    def list_intersection(intervals1, intervals2):
+        """
+        Return the intersection of two interval lists
+        Args:
+            intervals1 (a list of Interval instances):
+            intervals2 (a list of Interval instances):
+
+        Returns:
+            a list of Interval instances
+        """
+        # Force Convert left_value to float for all intervals
+        for interval in intervals1:
+            interval.left_value = float(interval.left_value)
+            interval.right_value = float(interval.right_value)
+        for interval in intervals2:
+            interval.left_value = float(interval.left_value)
+            interval.right_value = float(interval.right_value)
+
+        intervals1.sort(key=lambda k: k.left_value)
+        intervals2.sort(key=lambda k: k.left_value)
+        new_interval_list = []
+        i, j = 0, 0
+        while i < len(intervals1) and j < len(intervals2):
+            if intervals1[i].left_value < intervals2[j].left_value:
+                i += 1
+            elif intervals1[i].left_value > intervals2[j].left_value:
+                j += 1
+            else:
+                if Interval.intersection(intervals1[i], intervals2[j]) is not None:
+                    new_interval_list.append(Interval.intersection(intervals1[i], intervals2[j]))
+                i += 1
+                j += 1
+
         return new_interval_list
 
     @staticmethod
@@ -141,7 +228,7 @@ class Interval:
     @staticmethod
     def diff_list(t1_list, t2_list):
         """
-        Return the different part of two interval lists
+        Return the different part of two interval lists (t1_list - t2_list)
         Args:
             t1_list: a list of Intervals
             t2_list: a list of Intervals
@@ -477,14 +564,16 @@ if __name__ == "__main__":
 
     a = [Interval(0, 0, False, False), Interval(2.0, 5, False, False)]
     b = [Interval(0.0, 0.0, False, False), Interval(2.0, 3.0, False, False)]
-    c = [Interval(0.0, 0.0, False, False), Interval(2.0, 3.0, False, False)]
-    print(Interval.list_inclusion(c, b))
-    exit()
+    c = [Interval(0.0, 1.0, False, False), Interval(2.0, 3.0, False, False)]
+    print([str(item) for item in Interval.list_intersection(c, a)])
+    print([str(item) for item in Interval.list_intersection(a, c)])
+    # print(Interval.list_inclusion(c, a))
 
-    c = Interval.diff_list(b, a)
-    # ['[2.5,4.0]']
-    c = [Interval(0, 12,   False, False), Interval(21, 64, False, False)]
+    # c = Interval.diff_list(a, b)
+    # print([str(item) for item in c])
+    # # ['[2.5,4.0]']
+    # c = [Interval(0, 12,   False, False), Interval(21, 64, False, False)]
 
-    print([str(item) for item in Interval.diff(b, a)])
-    print([str(item) for item in Interval.list_union(c, a)])
-    print(Interval.list_inclusion(a, c))
+    # print([str(item) for item in Interval.diff_list(a, b)])
+    # print([str(item) for item in Interval.list_union(a, c)])
+    # print(Interval.list_inclusion(c, a))

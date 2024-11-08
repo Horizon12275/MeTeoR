@@ -152,7 +152,7 @@ if __name__ == "__main__":
     rule = Rule(head_p, [literal_p])
     i = 0
     delta_old = D
-    while i < 5:
+    while i < 10:
         i += 1
         delta_new = defaultdict(lambda: defaultdict(list))
         naive_join(rule, D=D, delta_new=delta_new, D_index=D_index)

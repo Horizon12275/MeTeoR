@@ -168,10 +168,12 @@ if __name__ == "__main__":
     rule = Rule(head_p, [literal_p])
     i = 0
     delta_old = D
-    while i < 100:
+    while i < 10:
         i += 1
         delta_new = defaultdict(lambda : defaultdict(list))
         seminaive_join(rule, D=D, delta_old=delta_old, delta_new=delta_new, D_index=D_index)
+        # print("old:")
+        # print_dataset(delta_old)
         print("new:")
         print_dataset(delta_new)
         for predicate in delta_new:

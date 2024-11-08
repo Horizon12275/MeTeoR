@@ -291,7 +291,7 @@ if __name__ == "__main__":
     D_index = build_index(D)
     program = load_program(raw_program)
 
-    materialize(D, rules=program, D_index=D_index, delta_old=D, seminaive=True, K=3)
+    materialize(D, rules=program, delta_old=D, seminaive=True, K=3)
     print_dataset(D)
     print("Seminaive method time: ", time.time() - start_time)
 
@@ -311,7 +311,7 @@ if __name__ == "__main__":
     coalescing_d(D)
     D_index = build_index(D)
     program = load_program(raw_program)
-    materialize(D, rules=program, D_index=D_index, delta_old=D, seminaive=False, K=3)
+    materialize(D, rules=program, delta_old=D, seminaive=False, K=3)
     print("Naive method time: ", time.time() - start_time)
     print_dataset(D)
     exit()
@@ -331,7 +331,7 @@ if __name__ == "__main__":
     coalescing_d(D)
     D_index = build_index(D)
     program = load_program(raw_program)
-    materialize(D, rules=program, D_index=D_index, K=1000)
+    materialize(D, rules=program, K=1000)
     print("naive method time: ", time.time() - start_time)
 
 
@@ -360,19 +360,3 @@ if __name__ == "__main__":
     print_dataset(D)
     end_time = time.time()
     print("The seminaive mat time:", end_time - start_time)
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-

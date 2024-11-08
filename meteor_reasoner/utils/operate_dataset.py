@@ -1,5 +1,6 @@
 import logging
-
+from meteor_reasoner.classes.interval import *
+from collections import defaultdict
 
 def get_min_max_rational(D):
     min_val = float("inf")
@@ -173,3 +174,65 @@ def save_dataset(D, outfilename):
                     for interval in intervals:
                         file.write(predicate + "(" + ",".join([item.name for item in entity]) + ")@" + str(interval))
                         file.write("\n")
+
+def dataset_intersection(D1, D2):
+    """
+    Compute the intersection of two datasets.
+    Args:
+        D1 (dict): The first dataset where each D1[predicate][entity] is a list of Interval instances.
+        D2 (dict): The second dataset where each D2[predicate][entity] is a list of Interval instances.
+
+    Returns:
+        dict: A new dataset with the intersection of intervals.
+    """
+    result = defaultdict(lambda: defaultdict(list))
+    for predicate in D1:
+        if predicate in D2:
+            result[predicate] = {}
+            for entity in D1[predicate]:
+                if entity in D2[predicate]:
+                    result[predicate][entity] = Interval.list_intersection(D1[predicate][entity], D2[predicate][entity])
+    return result
+
+def dataset_union(D1, D2):
+    """
+    Compute the union of two datasets
+    Args:
+        D1 (a dictionary object):
+        D2 (a dictionary object):
+
+    Returns:
+        D (a dictionary object): the union of D1 and D2
+    """
+    D = defaultdict(lambda: defaultdict(list))
+    for predicate in set(D1.keys()).union(D2.keys()):
+        D[predicate] = {}
+        entities = set(D1.get(predicate, {}).keys()).union(D2.get(predicate, {}).keys())
+        for entity in entities:
+            intervals1 = D1.get(predicate, {}).get(entity, [])
+            intervals2 = D2.get(predicate, {}).get(entity, [])
+            D[predicate][entity] = Interval.list_union(intervals1, intervals2)
+    return D
+
+def dataset_difference(D1, D2):
+    """
+    Compute the difference of two datasets
+    Args:
+        D1 (a dictionary object):
+        D2 (a dictionary object):
+
+    Returns:
+        D (a dictionary object): the difference of D1 and D2, i.e., D1 - D2
+    """
+    D = defaultdict(lambda: defaultdict(list))
+    for predicate in D1:
+        if predicate in D2:
+            D[predicate] = {}
+            for entity in D1[predicate]:
+                if entity in D2[predicate]:
+                    D[predicate][entity] = Interval.diff_list(D1[predicate][entity], D2[predicate][entity])
+                else:
+                    D[predicate][entity] = D1[predicate][entity]
+        else:
+            D[predicate] = D1[predicate]
+    return D
