@@ -1,18 +1,18 @@
 ## Content
 
-* <a href='#DonateBlood'>1. Donate_Blood</a>
-* <a href='#Catastrophic_Delete'>2. Catastrophic_Delete</a>
-* <a href='#Period_Change_1'>3. Period_Change_1</a>
-* <a href='#Period_Change_2'>4. Period_Change_2</a>
-* <a href='#Worst_DRed'>5. Worst_DRed</a>
-* <a href='#Period_Zero'>6. Period_Zero</a>
-* <a href='#Catastrophic_Delete_Datalog'>7. Catastrophic_Delete_Datalog</a>
-* <a href='#Parent_Ancestor'>8. Parent_Ancestor</a>
-* <a href='#Access_in_Graph'>9. Access_in_Graph</a>
+* <a href='#part1'>1. Donate_Blood</a>
+* <a href='#part2'>2. Catastrophic_Delete</a>
+* <a href='#part3'>3. Period_Change_1</a>
+* <a href='#part4'>4. Period_Change_2</a>
+* <a href='#part5'>5. Worst_DRed</a>
+* <a href='#part6'>6. Period_Zero</a>
+* <a href='#part7'>7. Catastrophic_Delete_Datalog</a>
+* <a href='#part8'>8. Parent_Ancestor</a>
+* <a href='#part9'>9. Access_in_Graph</a>
 
 ***
 
-<span id='DonateBlood'/>
+<span id='part1'/>
 
 #### 1. Donate_Blood
 
@@ -40,7 +40,7 @@
     fact = "NoDonate(a)@0"
 可以对b添加任意条件以增加运算量，不影响最终结果
 
-<span id='Catastrophic_Delete'/>
+<span id='part2'/>
 
 #### 2. Catastrophic_Delete
 
@@ -70,7 +70,7 @@
 ![img_1.png](img_1.png)
 去除data中的"B(x)@0"，不会影响执行结果，但是Dred会删除Time>=1的所有fact，然后再重新推出fact。
 
-<span id='Period_Change_1'/>
+<span id='part3'/>
 
 #### 3. Period_Change_1
 
@@ -84,7 +84,7 @@
     fact = "Step_five(a)@35"
 去除Step_seven(a)@[0,1]可使周期长度由35改变到5；
 
-<span id='Period_Change_2'/>
+<span id='part4'/>
 
 #### 4. Period_Change_2
 
@@ -97,7 +97,7 @@
     fact = "Step_five(a)@5"
 去除Step_three(a)@2可使周期长度由1改变到3；
 
-<span id='Worst_DRed'/>
+<span id='part5'/>
 
 #### 5. Worst_DRed
 
@@ -124,7 +124,7 @@
 
 data和program中关于Step_fifty的代码本意为设置周期长度足够大，但加入会导致程序不终止（挠头
 
-<span id='Period_Zero'/>
+<span id='part6'/>
 
 #### 6. Period_Zero
 
@@ -137,7 +137,7 @@ data和program中关于Step_fifty的代码本意为设置周期长度足够大�
 
 可用于观察MeTeoR的事实存储结构、研究Period性质。当时间足够大时，事件一直发生，Period为1
 
-<span id='Catastrophic_Delete_Datalog'/>
+<span id='part7'/>
 
 #### 7. Catastrophic_Delete_Datalog
 
@@ -177,7 +177,7 @@ OverDelete:
 Redo:
 ![img_4.png](img_4.png)
 
-<span id='Parent_Ancestor'/>
+<span id='part8'/>
 
 #### 8. Parent_Ancestor
 
@@ -195,9 +195,9 @@ Redo:
             ]
     fact = "ancestor(alice,gloria)@0"
 
-Datalog的经典递归示例，定义了如何通过父母关系推导出祖先关系
+Datalog的经典示例，定义了如何通过父母关系推导出祖先关系
 
-<span id='Access_in_Graph'/>
+<span id='part9'/>
 
 #### 9. Access_in_Graph
     data = [
