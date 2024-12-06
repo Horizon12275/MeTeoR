@@ -10,8 +10,6 @@ data = [
     "A(x)@0",
     "B(x)@0",
     "C(x)@0",
-
-    "PeriodTen(x)@0"
 ]
 program = [
            "D(X):-ALWAYS[-1,-1] A(X)",
@@ -19,12 +17,20 @@ program = [
             "E(X):-ALWAYS[-1,-1] B(X)",
             "E(X):-ALWAYS[-1,-1] C(X)",
 
-            "A(X):-ALWAYS[-1,-1] D(X)",
-            "B(X):-ALWAYS[-1,-1] D(X)",
-            "B(X):-ALWAYS[-1,-1] E(X)",
-            "C(X):-ALWAYS[-1,-1] E(X)",
+            "A1(X):-ALWAYS[-1,-1] D(X)",
+            "B1(X):-ALWAYS[-1,-1] D(X)",
+            "B1(X):-ALWAYS[-1,-1] E(X)",
+            "C1(X):-ALWAYS[-1,-1] E(X)",
 
-            "PeriodTen(X):-ALWAYS[-10,-10] PeriodTen(X)",
+            "D1(X):-ALWAYS[-1,-1] A1(X)",
+            "D1(X):-ALWAYS[-1,-1] B1(X)",
+            "E1(X):-ALWAYS[-1,-1] B1(X)",
+            "E1(X):-ALWAYS[-1,-1] C1(X)",
+
+            "A2(X):-ALWAYS[-1,-1] D1(X)",
+            "B2(X):-ALWAYS[-1,-1] D1(X)",
+            "B2(X):-ALWAYS[-1,-1] E1(X)",
+            "C2(X):-ALWAYS[-1,-1] E1(X)",
            ]
 D = load_dataset(data)
 Program = load_program(program)
@@ -63,7 +69,7 @@ else:
               "," + str(CR.base_interval.right_value + CR.w) + "]")
         print("[]")
 
-fact = "C(x)@200"
+fact = "C2(x)@4"
 predicate, entity, interval = parse_str_fact(fact)
 print("predicate:", predicate)
 print("entity:", entity)

@@ -7,25 +7,17 @@ from meteor_reasoner.canonical.utils import fact_entailment
 from meteor_reasoner.utils.operate_dataset import print_dataset, save_dataset_to_file
 
 data = [
-    "A(x)@0",
-    "B(x)@0",
-    "C(x)@0",
-
-    "PeriodTen(x)@0"
+    "parent(alice, bob)@0",
+    "parent(bob, carol)@0",
+    "parent(carol, david)@0",
+    "parent(david,ella)@0",
+    "parent(ella, frank)@0",
+    "parent(frank, gloria)@0",
 ]
 program = [
-           "D(X):-ALWAYS[-1,-1] A(X)",
-            "D(X):-ALWAYS[-1,-1] B(X)",
-            "E(X):-ALWAYS[-1,-1] B(X)",
-            "E(X):-ALWAYS[-1,-1] C(X)",
-
-            "A(X):-ALWAYS[-1,-1] D(X)",
-            "B(X):-ALWAYS[-1,-1] D(X)",
-            "B(X):-ALWAYS[-1,-1] E(X)",
-            "C(X):-ALWAYS[-1,-1] E(X)",
-
-            "PeriodTen(X):-ALWAYS[-10,-10] PeriodTen(X)",
-           ]
+        "ancestor(X, Y) :- parent(X, Y)",
+        "ancestor(X, Y) :- parent(X, Z), ancestor(Z, Y)"
+        ]
 D = load_dataset(data)
 Program = load_program(program)
 
@@ -63,7 +55,7 @@ else:
               "," + str(CR.base_interval.right_value + CR.w) + "]")
         print("[]")
 
-fact = "C(x)@200"
+fact = "ancestor(alice,gloria)@0"
 predicate, entity, interval = parse_str_fact(fact)
 print("predicate:", predicate)
 print("entity:", entity)

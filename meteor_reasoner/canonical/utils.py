@@ -3,6 +3,7 @@ from meteor_reasoner.materialization.coalesce import *
 from meteor_reasoner.materialization.t_operator import naive_immediate_consequence_operator
 from meteor_reasoner.utils.ruler_interval import *
 from meteor_reasoner.canonical.class_common_fragment import CommonFragment
+import copy
 
 
 def find_common_fragment(D1, D2, rules, varrho):
@@ -199,8 +200,11 @@ def build_left_ruler_intervals(left_interval_range, CR):
         next_point = (big_ruler_intervals[0].left_value, big_ruler_intervals[0].left_value - CR.pattern_len[::-1][i % CR.pattern_num])
     return big_ruler_intervals, big_ruler_intervals[-1]
 
-
+#检测从 right_interval_range 开始的、具有相似结构和事实的两个区间，这两个区间之间的距离即为右周期的长度。
 def find_right_period(D, right_interval_range, CR):
+    #big_ruler_intervals:一系列区间，时间间隔足够小，例如[0,0],(0,0.5),[0.5,0.5],(0.5,1),[1,1]......
+    # 以及[0,0],(0,0.75),[0.75,0.75],(0.75,1),[1,1],(1,1.75),[1.75,1.75],(1.75,2),[2,2]......
+    #starting_ruler_interval为big_ruler_intervals的第一个值
     big_ruler_intervals,  starting_ruler_interval = build_right_ruler_intervals(right_interval_range, CR)
     big_ruler_intervals = big_ruler_intervals[big_ruler_intervals.index(starting_ruler_interval):]
     len_big_ruler_intervals = len(big_ruler_intervals)
@@ -210,12 +214,14 @@ def find_right_period(D, right_interval_range, CR):
             continue
         first = big_ruler_intervals[i]
         try:
+            #在 big_ruler_intervals 中搜索一个距离为 CR.w 的右端点相同的区间
             second_index = big_ruler_intervals.index(Interval(first.left_value + CR.w, first.left_value + CR.w, False, False))
         except:
             break
-
+        #first_interval:[x,x]...[x+CR.w,x+CR.w]
         first_interval = big_ruler_intervals[i:second_index+1]
 
+        #从[x+1,x+1]开始向后遍历
         for k in range(i+1, len_big_ruler_intervals):
             if big_ruler_intervals[k].left_open:
                 continue
@@ -225,9 +231,11 @@ def find_right_period(D, right_interval_range, CR):
                     Interval(first.left_value + CR.w, first.left_value + CR.w, False, False))
             except:
                 break
-
+            # second_interval:[y,y]...[y+CR.w,y+CR.w],y>x
             second_interval = big_ruler_intervals[k: second_index+1]
             if has_same_pattern(second_interval, first_interval) and has_same_facts(first_interval, second_interval, D):
+                #has_same_pattern检测interval长度、区间开闭性，以及每个ruler的长度
+                #has_same_facts进一步检测事实是否一致
                 varrho_right_dict = defaultdict(list)
                 start_index = first_interval[-1].right_value
                 end_index = second_interval[-1].right_value
@@ -268,13 +276,14 @@ def find_periods(CR):
         common_fragment.common = Interval(Decimal("-inf"), Decimal("+inf"), True, True)
 
         delta_new = naive_immediate_consequence_operator(D=CR.D, rules=CR.Program, D_index=CR.D_index)
+        #计算新的推理结果
         number_mat += 1
         diff_delta = []
         terminate_flag = False
         for head_predicate in delta_new:
             for head_entity, T in delta_new[head_predicate].items():
                 if head_predicate not in CR.D or head_entity not in CR.D[head_predicate]:
-                    diff_delta = T
+                    diff_delta = copy.deepcopy(T)
                 else:
                     for interval1 in T:
                         diff_delta += Interval.diff(interval1, CR.D[head_predicate][head_entity])
@@ -282,11 +291,13 @@ def find_periods(CR):
                 for cr_interval in diff_delta:
                     if Interval.intersection(cr_interval, common_fragment.base_interval):
                         # it denotes that now |\varrho_max != Dnext |\varrho_max
+                        #diff_delta 中的区间和 common_fragment 存在交集，意味着新的推理结果与当前片段不同步
                         common_fragment.cr_flag = False
                         common_fragment.common = None
                         terminate_flag = True
                         break
                     else:
+                        #若没有交集，则更新 common_fragment 的左右端点，确保公共片段在没有交集的情况下依旧保持连续。
                         if cr_interval.right_value <= common_fragment.base_interval.left_value:
                             if cr_interval.right_value >= common_fragment.common.left_value:
                                 common_fragment.common.left_value = cr_interval.right_value
@@ -307,6 +318,7 @@ def find_periods(CR):
 
         if len(diff_delta) == 0:
             # fixpoint
+            #diff_delta 为空，表明数据已达饱和，即推理过程不再产生新的事实。
             common_fragment.common.left_value = decimal.Decimal("-inf")
             common_fragment.common.left_open = True
             common_fragment.common.right_value = decimal.Decimal("+inf")
@@ -344,6 +356,7 @@ def find_periods(CR):
         if varrho_left_range.left_value in [Decimal("-inf")] and varrho_right_range.right_value in [Decimal("+inf")]:
             return CR.D, common_fragment.common, None, None, None, None, None, None
 
+        #公共片段不为空，则函数通过调用 find_left_period 和 find_right_period 找到左、右两端的周期性区间。
         if varrho_left_range.left_value in [Decimal("-inf")]:
             varrho_right, varrho_right_dict = find_right_period(CR.D, varrho_right_range, CR)
             if varrho_right is not None:
@@ -385,6 +398,7 @@ def find_periods(CR):
                             right_period[key] = coalescing(value)
                         return CR.D, common_fragment.common, varrho_left, left_period, left_len, varrho_right, right_period, right_len
 
+        #将 delta_new 中的新事实加入 CR.D，并更新索引
         for tmp_predicate in delta_new:
             for tmp_entity in delta_new[tmp_predicate]:
                 if tmp_predicate not in CR.D or tmp_entity not in CR.D[tmp_predicate]:

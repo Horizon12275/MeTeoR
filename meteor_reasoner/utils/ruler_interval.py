@@ -279,13 +279,13 @@ def get_gcd(program):
                         numbers.add(operator.interval.left_value)
                     if operator.interval.right_value not in [Decimal("inf"), Decimal("-inf")]:
                         numbers.add(operator.interval.right_value )
-
-    precisions = [len(str(item).split(".")[1]) for item in numbers if len(str(item).split(".")) == 2]
-    if len(precisions) == 0 and len(numbers) != 0:
+    #至此 numbers 集合中存储了所有从规则中提取的数值。
+    precisions = [len(str(item).split(".")[1]) for item in numbers if len(str(item).split(".")) == 2]#检测小数
+    if len(precisions) == 0 and len(numbers) != 0:#不存在小数，正常计算最大公约数
         return max(numbers), reduce(lambda x, y: math.gcd(int(x), int(y)), numbers)
     elif len(precisions) == 0 and len(numbers) == 0:
         return 1, 1
-    else:
+    else:#存在小数，先放大，比如将0.125放大到125，计算最大公约数，再缩放回原来的比例
         aug = 10 ** max(precisions)
         aug_numbers = [item*aug for item in numbers]
         gcd = reduce(lambda x, y: math.gcd(int(x), int(y)), aug_numbers) / aug

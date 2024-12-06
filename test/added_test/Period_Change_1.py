@@ -50,7 +50,7 @@ else:
               "," + str(CR.base_interval.right_value + CR.w) + "]")
         print("[]")
 
-fact = "Step_five(a)@35"
+fact = "Step_five(a)@100"
 predicate, entity, interval = parse_str_fact(fact)
 print("predicate:", predicate)
 print("entity:", entity)

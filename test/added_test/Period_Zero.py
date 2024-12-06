@@ -7,25 +7,10 @@ from meteor_reasoner.canonical.utils import fact_entailment
 from meteor_reasoner.utils.operate_dataset import print_dataset, save_dataset_to_file
 
 data = [
-    "A(x)@0",
-    "B(x)@0",
-    "C(x)@0",
-
-    "PeriodTen(x)@0"
+    "A(a)@0",
+    "A(b)@-100"
 ]
-program = [
-           "D(X):-ALWAYS[-1,-1] A(X)",
-            "D(X):-ALWAYS[-1,-1] B(X)",
-            "E(X):-ALWAYS[-1,-1] B(X)",
-            "E(X):-ALWAYS[-1,-1] C(X)",
-
-            "A(X):-ALWAYS[-1,-1] D(X)",
-            "B(X):-ALWAYS[-1,-1] D(X)",
-            "B(X):-ALWAYS[-1,-1] E(X)",
-            "C(X):-ALWAYS[-1,-1] E(X)",
-
-            "PeriodTen(X):-ALWAYS[-10,-10] PeriodTen(X)",
-           ]
+program = ["A(X):- SOMETIME[-10,-9]A(X)"]
 D = load_dataset(data)
 Program = load_program(program)
 
@@ -63,7 +48,7 @@ else:
               "," + str(CR.base_interval.right_value + CR.w) + "]")
         print("[]")
 
-fact = "C(x)@200"
+fact = "A(a)@200"
 predicate, entity, interval = parse_str_fact(fact)
 print("predicate:", predicate)
 print("entity:", entity)
