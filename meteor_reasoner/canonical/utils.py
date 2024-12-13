@@ -291,13 +291,13 @@ def find_periods(CR):
                 for cr_interval in diff_delta:
                     if Interval.intersection(cr_interval, common_fragment.base_interval):
                         # it denotes that now |\varrho_max != Dnext |\varrho_max
-                        #diff_delta 中的区间和 common_fragment 存在交集，意味着新的推理结果与当前片段不同步
+                        #diff_delta 中的区间和 common_fragment 存在交集
                         common_fragment.cr_flag = False
                         common_fragment.common = None
                         terminate_flag = True
                         break
                     else:
-                        #若没有交集，则更新 common_fragment 的左右端点，确保公共片段在没有交集的情况下依旧保持连续。
+                        #若没有交集，则更新 common_fragment 的左右端点
                         if cr_interval.right_value <= common_fragment.base_interval.left_value:
                             if cr_interval.right_value >= common_fragment.common.left_value:
                                 common_fragment.common.left_value = cr_interval.right_value

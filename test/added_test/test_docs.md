@@ -9,7 +9,10 @@
 * <a href='#part7'>7. Catastrophic_Delete_Datalog</a>
 * <a href='#part8'>8. Parent_Ancestor</a>
 * <a href='#part9'>9. Access_in_Graph</a>
-
+* <a href='#part10'>10. Role_Inherit</a>
+* <a href='#part11'>11. Course_Recommendation</a>
+* <a href='#part12'>12. Cycle_in_Graph</a>
+* 
 ***
 
 <span id='part1'/>
@@ -171,10 +174,15 @@ data和program中关于Step_fifty的代码本意为设置周期长度足够大�
 Catastrophic_Delete的非递归版本，删除B(x)@0可触发灾难性的删除
 
 Original:
+
 ![img_2.png](img_2.png)
+
 OverDelete:
+
 ![img_3.png](img_3.png)
+
 Redo:
+
 ![img_4.png](img_4.png)
 
 <span id='part8'/>
@@ -223,15 +231,79 @@ Datalog的经典示例，定义了如何通过父母关系推导出祖先关系
     ]
     program = [
             "path(X, Y) :- edge(X, Y)",
-            "path(X, Y) :- path(X, Z), path(Z, Y)",
+            "path(X, Y) :- edge(X, Z), path(Z, Y)",
             #for undirect graph
             #"path(Y,X):- path(X, Y)"
             ]
     fact = "path(s,t)@0"
 
 示意图：
+
 ![img_5.png](img_5.png)
+
 结果分为三部分{path(x,y)|x,y∈{L}},{path(x,y)|x,y∈{R}},{path(x,y)|x∈{L},y∈{R}}.删除"edge(a,e)@0"会导致第三个部分中的部分事实被overdelete，然后重新被推出。
 
 
+<span id='part10'/>
 
+#### 10. Role_Inherit
+    
+    data = [
+        "Role(alice,admin)@[0,1)",
+        "Role(bob,editor)@[0,1)",
+        "Role(carol,viewer)@[0,1)",
+    
+        "Inherit(alice,alice)@1",
+        "Inherit(bob,carol)@1",
+        "Inherit(carol,david)@1",
+        "Inherit(carol,ella)@2",
+    ]
+    program = [
+        "ALWAYS[0,1)Role(UserB, Role) :- Inherit(UserA, UserB), ALWAYS[-1,0) Role(UserA, Role)"
+    ]
+
+某公司每年续签一次合同，计算n年后的职务
+
+<span id='part11'/>
+
+#### 11. Course_Recommendation
+
+    data = [
+        "Enrolled(john, ds)@0",
+        "Enrolled(mary, ds)@0",
+        "Enrolled(mary, sep)@1",
+        "Enrolled(john, ics1)@2",
+        "Enrolled(mary, ics2)@3"
+    ]
+    program = [
+        "ALWAYS[0,1] Course_mate(X,Y) :- ALWAYS[-1,-1]Enrolled(X,C),ALWAYS[-1,-1]Enrolled(Y,C)",  # 关系保存时间为两年
+        "Course_mate(X,Y):-Course_mate(Y,X)",
+        "Recommend_course(Y,C):-Enrolled(X,C),Course_mate(X,Y)"
+    ]
+
+如果某学期两位同学同时上了某课程，则在接下来的两学期内，选课系统会推荐对方选的课。（没去除X=Y的情况）
+
+<span id='part12'/>
+
+#### 12. Cycle_in_Graph
+
+    data = [
+        "edge(a,b)@0",
+        "edge(b,c)@0",
+        "edge(c,b)@0",
+        "edge(c,d)@0",
+        "edge(a,d)@0",
+        "edge(d,f)@0",
+        "edge(e,f)@0",
+        "edge(f,a)@0",
+    ]
+    program = [
+        "path(X, Y) :- edge(X, Y)",
+        "path(X, Y) :- edge(X, Z), path(Z, Y)",
+    
+        "cycle(X):- path(X,X)"
+    ]
+检测某点是否在环中
+
+示意图：
+![img_6.png](img_6.png)

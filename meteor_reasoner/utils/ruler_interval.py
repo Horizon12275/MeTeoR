@@ -279,7 +279,7 @@ def get_gcd(program):
                         numbers.add(operator.interval.left_value)
                     if operator.interval.right_value not in [Decimal("inf"), Decimal("-inf")]:
                         numbers.add(operator.interval.right_value )
-    #至此 numbers 集合中存储了所有从规则中提取的数值。
+    #至此 numbers 集合中存储了所有从Program中提取的数值。
     precisions = [len(str(item).split(".")[1]) for item in numbers if len(str(item).split(".")) == 2]#检测小数
     if len(precisions) == 0 and len(numbers) != 0:#不存在小数，正常计算最大公约数
         return max(numbers), reduce(lambda x, y: math.gcd(int(x), int(y)), numbers)
