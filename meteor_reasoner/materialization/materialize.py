@@ -119,7 +119,7 @@ def materialize(D, rules, mode="seminaive", K=100, logger=None, metrics=None):
         calc_time = 0.0
 
     while k < K:
-        print("Iteration:", k)
+        #print("Iteration:", k)
         k += 1
         if seminaive:
             delta_new = seminaive_immediate_consequence_operator(rules, D, D_index, delta_old=delta_old)

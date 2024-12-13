@@ -230,7 +230,7 @@ def dataset_difference(D1, D2):
             D[predicate] = {}
             for entity in D1[predicate]:
                 if entity in D2[predicate]:
-                    D[predicate][entity] = Interval.diff_list(D1[predicate][entity], D2[predicate][entity])
+                    D[predicate][entity] = Interval.diff_list_incre(D1[predicate][entity], D2[predicate][entity])
                 else:
                     D[predicate][entity] = D1[predicate][entity]
         else:
