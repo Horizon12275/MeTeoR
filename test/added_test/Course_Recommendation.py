@@ -7,32 +7,17 @@ from meteor_reasoner.canonical.utils import fact_entailment
 from meteor_reasoner.utils.operate_dataset import print_dataset, save_dataset_to_file
 
 data = [
-    "edge(s,a)@0",
-    "edge(s,b)@0",
-    "edge(s,c)@0",
-
-    "edge(a,b)@0",
-    "edge(c,b)@0",
-
-    "edge(a,d)@0",
-    "edge(a,e)@0",#delete this one
-    "edge(b,e)@0",
-    "edge(c,f)@0"
-
-    "edge(d,e)@0",
-    "edge(e,f)@0",
-
-    "edge(d,g)@0",
-    "edge(e,g)@0",
-    "edge(g,t)@0",
-    "edge(f,t)@0",
+    "Enrolled(john, ds)@0",
+    "Enrolled(mary, ds)@0",
+    "Enrolled(mary, sep)@1",
+    "Enrolled(john, ics1)@2",
+    "Enrolled(mary, ics2)@3"
 ]
 program = [
-        "path(X, Y) :- edge(X, Y)",
-        "path(X, Y) :- edge(X, Z), path(Z, Y)",
-        #for undirect graph
-        #"path(Y,X):- path(X, Y)"
-        ]
+    "ALWAYS[0,1] Course_mate(X,Y) :- ALWAYS[-1,-1]Enrolled(X,C),ALWAYS[-1,-1]Enrolled(Y,C)",  # 关系保存时间为两年
+    "Course_mate(X,Y):-Course_mate(Y,X)",
+    "Recommend_course(Y,C):-Enrolled(X,C),Course_mate(X,Y)"
+]
 D = load_dataset(data)
 Program = load_program(program)
 
@@ -70,7 +55,7 @@ else:
               "," + str(CR.base_interval.right_value + CR.w) + "]")
         print("[]")
 
-fact = "path(s,t)@0"
+fact = "Recommend_course(john,sep)@1"
 predicate, entity, interval = parse_str_fact(fact)
 print("predicate:", predicate)
 print("entity:", entity)
