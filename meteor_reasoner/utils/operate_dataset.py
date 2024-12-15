@@ -1,6 +1,7 @@
 import logging
 from meteor_reasoner.classes.interval import *
 from collections import defaultdict
+import traceback
 
 def get_min_max_rational(D):
     min_val = float("inf")
@@ -236,3 +237,32 @@ def dataset_difference(D1, D2):
         else:
             D[predicate] = D1[predicate]
     return D
+
+def dataset_Same(D1, D2):
+    """
+    Check if two datasets are the same.
+    Args:
+        D1 (a dictionary object):
+        D2 (a dictionary object):
+
+    Returns:
+        bool: True if D1 and D2 are the same, False otherwise.
+    """
+    try:
+        for predicate in D1:
+            for entity in D1[predicate]:
+                for i in range(len(D1[predicate][entity])):
+                    if D1[predicate][entity][i] != D2[predicate][entity][i]:
+                        print("The interval {} is not the same".format(D1[predicate][entity][i]))
+                        return False
+            for entity in D2[predicate]:
+                for i in range(len(D2[predicate][entity])):
+                    if D2[predicate][entity][i] != D1[predicate][entity][i]:
+                        print("The interval {} is not the same".format(D2[predicate][entity][i]))
+                        return False
+    except Exception as e:
+        print("The error is in the dataset_Same")
+        print(f"Exception: {e}")
+        traceback.print_exc()
+        return False
+    return True

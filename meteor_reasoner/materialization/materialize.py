@@ -68,10 +68,22 @@ def naive_combine(D, delta_new, D_index=None):
             if head_predicate not in D or entity not in D[head_predicate]:
                 fixpoint = False
                 try:
+                    # the following line may cause error due to the empty D[head_predicate][entity]
                     D[head_predicate][entity] = D[head_predicate][entity] + T
                 except:
                     print("debug")
-                    D[head_predicate][entity] = D[head_predicate][entity] + T
+                    # print("head_predicate:", head_predicate)
+                    # for item in entity:
+                    #     print(item.name)
+                    # for item in T:
+                    #     print(item)
+                    # print(D[head_predicate])
+                    # if D[head_predicate][entity] is empty, we need to initialize it first
+                    #print("D[head_predicate][entity] is ")
+                    #print(D.get(head_predicate, {}).get(entity, []))
+                    D[head_predicate][entity] = T
+                    # the following line may cause error due to the empty D[head_predicate][entity]
+                    #D[head_predicate][entity] = D[head_predicate][entity] + T
                 # update index
                 for i, item in enumerate(entity):
                     D_index[head_predicate][str(i) + "@" + item.name].append(entity)

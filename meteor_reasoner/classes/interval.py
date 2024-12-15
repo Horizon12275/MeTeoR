@@ -343,6 +343,15 @@ class Interval:
 
     @staticmethod
     def inclusion(v1, v2):
+        """
+        Judge whether v1 is included by v2 (v1 is a subset of v2)
+        Args:
+            v1 (an Interval instance):
+            v2 (an Interval instance):
+
+        Returns:
+            boolean
+        """
         if v1.left_value < v2.left_value or v1.right_value > v2.right_value:
             return False
         else:
