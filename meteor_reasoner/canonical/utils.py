@@ -9,7 +9,8 @@ import copy
 def find_common_fragment(D1, D2, rules, varrho):
     points, min_x, max_x = get_dataset_points_x(D2, min_x_flag=True)
     _, gcd = get_gcd(rules)
-    _, initial_window_ruler_intervals = get_initial_ruler_intervals(points, left_border=min_x, right_border=max_x, gcd=gcd)
+    _, initial_window_ruler_intervals = get_initial_ruler_intervals(points, left_border=min_x, right_border=max_x,
+                                                                    gcd=gcd)
     left_point = Interval(varrho.left_value, varrho.left_value, False, False)
     right_point = Interval(varrho.right_value, varrho.right_value, False, False)
     left_i = initial_window_ruler_intervals.index(left_point)
@@ -47,7 +48,7 @@ def find_common_fragment(D1, D2, rules, varrho):
                 break
 
     right_border = None
-    while right_i < len(initial_window_ruler_intervals)-1:
+    while right_i < len(initial_window_ruler_intervals) - 1:
         right_i += 1
         ruler_interval = initial_window_ruler_intervals[right_i]
         flag = False
@@ -105,7 +106,7 @@ def has_same_pattern(ruler_intervals1, ruler_intervals2):
             ruler_intervals1[-1].right_open != ruler_intervals2[-1].right_open:
         return False
     for ruler1, ruler2 in zip(ruler_intervals1, ruler_intervals2):
-        if abs(ruler1.right_value-ruler1.left_value) != abs(ruler2.right_value - ruler2.left_value):
+        if abs(ruler1.right_value - ruler1.left_value) != abs(ruler2.right_value - ruler2.left_value):
             return False
     return True
 
@@ -124,7 +125,7 @@ def has_same_facts(ruler_intervals1, ruler_intervals2, D):
         for predicate in D:
             for entity in D[predicate]:
                 if (interval_inclusion_intervallist(ruler1, D[predicate][entity]) and \
-                        not interval_inclusion_intervallist(ruler2, D[predicate][entity])) or \
+                    not interval_inclusion_intervallist(ruler2, D[predicate][entity])) or \
                         (interval_inclusion_intervallist(ruler2, D[predicate][entity]) and
                          not interval_inclusion_intervallist(ruler1, D[predicate][entity])):
                     return False
@@ -141,13 +142,14 @@ def find_left_period(D, left_interval_range, CR):
             continue
         first = big_ruler_intervals[i]
         try:
-            second_index = big_ruler_intervals.index(Interval(first.left_value - CR.w, first.left_value - CR.w, False, False))
+            second_index = big_ruler_intervals.index(
+                Interval(first.left_value - CR.w, first.left_value - CR.w, False, False))
 
         except:
 
             break
 
-        first_interval = big_ruler_intervals[second_index: i+1]
+        first_interval = big_ruler_intervals[second_index: i + 1]
         for k in range(i - 1, -1, -1):
             if big_ruler_intervals[k].left_open:
                 continue
@@ -157,7 +159,7 @@ def find_left_period(D, left_interval_range, CR):
                     Interval(first.left_value - CR.w, first.left_value - CR.w, False, False))
             except:
                 break
-            second_interval = big_ruler_intervals[second_index: k+1]
+            second_interval = big_ruler_intervals[second_index: k + 1]
             if has_same_pattern(second_interval, first_interval) and has_same_facts(first_interval, second_interval,
                                                                                     D):
                 varrho_left_dict = defaultdict(list)
@@ -180,49 +182,57 @@ def find_left_period(D, left_interval_range, CR):
 def build_right_ruler_intervals(right_interval_range, CR):
     big_ruler_intervals = CR.right_initial_ruler_intervals[:]
     i = 0
-    next_point = (big_ruler_intervals[-1].right_value, big_ruler_intervals[-1].right_value + CR.pattern_len[i % CR.pattern_num])
+    next_point = (
+        big_ruler_intervals[-1].right_value, big_ruler_intervals[-1].right_value + CR.pattern_len[i % CR.pattern_num])
     while next_point[1] < right_interval_range.right_value:
         big_ruler_intervals.append(Interval(next_point[0], next_point[1], True, True))
         big_ruler_intervals.append(Interval(next_point[1], next_point[1], False, False))
         i += 1
-        next_point = (big_ruler_intervals[-1].right_value, big_ruler_intervals[-1].right_value + CR.pattern_len[i % CR.pattern_num])
+        next_point = (
+            big_ruler_intervals[-1].right_value,
+            big_ruler_intervals[-1].right_value + CR.pattern_len[i % CR.pattern_num])
     return big_ruler_intervals, big_ruler_intervals[0]
 
 
 def build_left_ruler_intervals(left_interval_range, CR):
     big_ruler_intervals = CR.left_initial_ruler_intervals[:]
     i = 0
-    next_point = (big_ruler_intervals[0].left_value, big_ruler_intervals[0].left_value - CR.pattern_len[::-1][i % CR.pattern_num])
+    next_point = (
+        big_ruler_intervals[0].left_value, big_ruler_intervals[0].left_value - CR.pattern_len[::-1][i % CR.pattern_num])
     while next_point[1] > left_interval_range.left_value:
-        big_ruler_intervals = [Interval(next_point[1], next_point[0], True,  True)] + big_ruler_intervals
+        big_ruler_intervals = [Interval(next_point[1], next_point[0], True, True)] + big_ruler_intervals
         big_ruler_intervals = [Interval(next_point[1], next_point[1], False, False)] + big_ruler_intervals
         i += 1
-        next_point = (big_ruler_intervals[0].left_value, big_ruler_intervals[0].left_value - CR.pattern_len[::-1][i % CR.pattern_num])
+        next_point = (
+            big_ruler_intervals[0].left_value,
+            big_ruler_intervals[0].left_value - CR.pattern_len[::-1][i % CR.pattern_num])
     return big_ruler_intervals, big_ruler_intervals[-1]
 
-#检测从 right_interval_range 开始的、具有相似结构和事实的两个区间，这两个区间之间的距离即为右周期的长度。
+
+# 检测从 right_interval_range 开始的、具有相似结构和事实的两个区间，这两个区间之间的距离即为右周期的长度。
 def find_right_period(D, right_interval_range, CR):
-    #big_ruler_intervals:一系列区间，时间间隔足够小，例如[0,0],(0,0.5),[0.5,0.5],(0.5,1),[1,1]......
+    # big_ruler_intervals:一系列区间，时间间隔足够小，例如[0,0],(0,0.5),[0.5,0.5],(0.5,1),[1,1]......
     # 以及[0,0],(0,0.75),[0.75,0.75],(0.75,1),[1,1],(1,1.75),[1.75,1.75],(1.75,2),[2,2]......
-    #starting_ruler_interval为big_ruler_intervals的第一个值
-    big_ruler_intervals,  starting_ruler_interval = build_right_ruler_intervals(right_interval_range, CR)
+    # starting_ruler_interval为big_ruler_intervals的第一个值
+    big_ruler_intervals, starting_ruler_interval = build_right_ruler_intervals(right_interval_range, CR)
     big_ruler_intervals = big_ruler_intervals[big_ruler_intervals.index(starting_ruler_interval):]
     len_big_ruler_intervals = len(big_ruler_intervals)
 
-    for i in range(0, len_big_ruler_intervals-1):
+    for i in range(0, len_big_ruler_intervals - 1):
         if big_ruler_intervals[i].left_open:
             continue
         first = big_ruler_intervals[i]
         try:
-            #在 big_ruler_intervals 中搜索一个距离为 CR.w 的右端点相同的区间
-            second_index = big_ruler_intervals.index(Interval(first.left_value + CR.w, first.left_value + CR.w, False, False))
+            # 在 big_ruler_intervals 中搜索一个距离为 CR.w 的右端点相同的区间
+            second_index = big_ruler_intervals.index(
+                Interval(first.left_value + CR.w, first.left_value + CR.w, False, False))
         except:
             break
-        #first_interval:[x,x]...[x+CR.w,x+CR.w]
-        first_interval = big_ruler_intervals[i:second_index+1]
+        # first_interval:[x,x]...[x+CR.w,x+CR.w]
+        first_interval = big_ruler_intervals[i:second_index + 1]
 
-        #从[x+1,x+1]开始向后遍历
-        for k in range(i+1, len_big_ruler_intervals):
+        # 从[x+1,x+1]开始向后遍历
+        for k in range(i + 1, len_big_ruler_intervals):
             if big_ruler_intervals[k].left_open:
                 continue
             first = big_ruler_intervals[k]
@@ -232,10 +242,10 @@ def find_right_period(D, right_interval_range, CR):
             except:
                 break
             # second_interval:[y,y]...[y+CR.w,y+CR.w],y>x
-            second_interval = big_ruler_intervals[k: second_index+1]
+            second_interval = big_ruler_intervals[k: second_index + 1]
             if has_same_pattern(second_interval, first_interval) and has_same_facts(first_interval, second_interval, D):
-                #has_same_pattern检测interval长度、区间开闭性，以及每个ruler的长度
-                #has_same_facts进一步检测事实是否一致
+                # has_same_pattern检测interval长度、区间开闭性，以及每个ruler的长度
+                # has_same_facts进一步检测事实是否一致
                 varrho_right_dict = defaultdict(list)
                 start_index = first_interval[-1].right_value
                 end_index = second_interval[-1].right_value
@@ -244,10 +254,10 @@ def find_right_period(D, right_interval_range, CR):
                 for predicate in D:
                     for entity in D[predicate]:
                         for ruler in D[predicate][entity]:
-                             intersection_ruler = Interval.intersection(ruler, right_period)
-                             if intersection_ruler:
-                                   varrho_right_dict[intersection_ruler].append(str(Atom(predicate, entity)))
-                return right_period,  varrho_right_dict
+                            intersection_ruler = Interval.intersection(ruler, right_period)
+                            if intersection_ruler:
+                                varrho_right_dict[intersection_ruler].append(str(Atom(predicate, entity)))
+                return right_period, varrho_right_dict
 
     return None, None
 
@@ -276,7 +286,7 @@ def find_periods(CR):
         common_fragment.common = Interval(Decimal("-inf"), Decimal("+inf"), True, True)
 
         delta_new = naive_immediate_consequence_operator(D=CR.D, rules=CR.Program, D_index=CR.D_index)
-        #计算新的推理结果
+        # 计算新的推理结果
         number_mat += 1
         diff_delta = []
         terminate_flag = False
@@ -287,17 +297,18 @@ def find_periods(CR):
                 else:
                     for interval1 in T:
                         diff_delta += Interval.diff(interval1, CR.D[head_predicate][head_entity])
+                        print(interval1)
 
                 for cr_interval in diff_delta:
                     if Interval.intersection(cr_interval, common_fragment.base_interval):
                         # it denotes that now |\varrho_max != Dnext |\varrho_max
-                        #diff_delta 中的区间和 common_fragment 存在交集
+                        # diff_delta 中的区间和 common_fragment 存在交集
                         common_fragment.cr_flag = False
                         common_fragment.common = None
                         terminate_flag = True
                         break
                     else:
-                        #若没有交集，则更新 common_fragment 的左右端点
+                        # 若没有交集，则更新 common_fragment 的左右端点
                         if cr_interval.right_value <= common_fragment.base_interval.left_value:
                             if cr_interval.right_value >= common_fragment.common.left_value:
                                 common_fragment.common.left_value = cr_interval.right_value
@@ -318,20 +329,22 @@ def find_periods(CR):
 
         if len(diff_delta) == 0:
             # fixpoint
-            #diff_delta 为空，表明数据已达饱和，即推理过程不再产生新的事实。
+            # diff_delta 为空，表明数据已达饱和，即推理过程不再产生新的事实。
             common_fragment.common.left_value = decimal.Decimal("-inf")
             common_fragment.common.left_open = True
             common_fragment.common.right_value = decimal.Decimal("+inf")
             common_fragment.common.right_open = True
             return CR.D, common_fragment.common, None, None, None, None, None, None
 
-        if common_fragment.common is None or abs(CR.min_x - common_fragment.common.left_value) <= 2 * CR.w or abs(common_fragment.common.right_value - CR.max_x) <= 2 * CR.w:
+        if common_fragment.common is None or abs(CR.min_x - common_fragment.common.left_value) <= 2 * CR.w or abs(
+                common_fragment.common.right_value - CR.max_x) <= 2 * CR.w:
             # add the new facts to the dataset
             for tmp_predicate in delta_new:
                 for tmp_entity in delta_new[tmp_predicate]:
                     # just to update index here
                     if tmp_predicate not in CR.D or tmp_entity not in CR.D[tmp_predicate]:
-                        CR.D[tmp_predicate][tmp_entity] = CR.D[tmp_predicate][tmp_entity] + delta_new[tmp_predicate][tmp_entity]
+                        CR.D[tmp_predicate][tmp_entity] = CR.D[tmp_predicate][tmp_entity] + delta_new[tmp_predicate][
+                            tmp_entity]
                         # update index
                         for i, item in enumerate(tmp_entity):
                             CR.D_index[tmp_predicate][str(i) + "@" + item.name].append(tmp_entity)
@@ -350,13 +363,15 @@ def find_periods(CR):
         # it denotes that now |\varrho_max == Dnext |\varrho_max and \varrho_max != \emptyset and t=t_D^- \in \varrho_max,
         # so it satisfies the while conditions in line 4 and line 12
         # \varrho_max = [common_fragment.common.left_value, common_fragment.common.right_value]
-        varrho_left_range = Interval(common_fragment.common.left_value, CR.min_x, common_fragment.common.left_open, False)
-        varrho_right_range = Interval(CR.max_x, common_fragment.common.right_value, False, common_fragment.common.right_open)
+        varrho_left_range = Interval(common_fragment.common.left_value, CR.min_x, common_fragment.common.left_open,
+                                     False)
+        varrho_right_range = Interval(CR.max_x, common_fragment.common.right_value, False,
+                                      common_fragment.common.right_open)
 
         if varrho_left_range.left_value in [Decimal("-inf")] and varrho_right_range.right_value in [Decimal("+inf")]:
             return CR.D, common_fragment.common, None, None, None, None, None, None
 
-        #公共片段不为空，则函数通过调用 find_left_period 和 find_right_period 找到左、右两端的周期性区间。
+        # 公共片段不为空，则函数通过调用 find_left_period 和 find_right_period 找到左、右两端的周期性区间。
         if varrho_left_range.left_value in [Decimal("-inf")]:
             varrho_right, varrho_right_dict = find_right_period(CR.D, varrho_right_range, CR)
             if varrho_right is not None:
@@ -398,7 +413,7 @@ def find_periods(CR):
                             right_period[key] = coalescing(value)
                         return CR.D, common_fragment.common, varrho_left, left_period, left_len, varrho_right, right_period, right_len
 
-        #将 delta_new 中的新事实加入 CR.D，并更新索引
+        # 将 delta_new 中的新事实加入 CR.D，并更新索引
         for tmp_predicate in delta_new:
             for tmp_entity in delta_new[tmp_predicate]:
                 if tmp_predicate not in CR.D or tmp_entity not in CR.D[tmp_predicate]:
@@ -455,11 +470,13 @@ def fact_entailment(D, fact, base_interval, left_period, left_len, right_period,
                             repeated_intervals = right_period[str(Atom(fact.predicate, fact.entity))]
                             for interval in repeated_intervals:
                                 if interval.right_value - interval.left_value == right_len:
-                                    #infinity range
+                                    # infinity range
                                     return True
                                 else:
-                                    new_interval = Interval(interval.left_value + right_len * math.ceil((target_interval.right_value-interval.right_value)/right_len),
-                                                            interval.right_value + right_len * math.ceil((target_interval.right_value-interval.right_value)/right_len),
+                                    new_interval = Interval(interval.left_value + right_len * math.ceil(
+                                        (target_interval.right_value - interval.right_value) / right_len),
+                                                            interval.right_value + right_len * math.ceil((
+                                                                                                                 target_interval.right_value - interval.right_value) / right_len),
                                                             interval.left_open, interval.right_open)
                                     if Interval.inclusion(remain_interval, new_interval):
                                         return True
@@ -482,8 +499,10 @@ def fact_entailment(D, fact, base_interval, left_period, left_len, right_period,
                                     return True
                                 else:
                                     new_interval = Interval(
-                                        interval.left_value - left_len * math.ceil(abs(target_interval.right_value-interval.left_value) / left_len),
-                                        interval.right_value - left_len * math.ceil(abs(target_interval.right_value-interval.left_value) / left_len),
+                                        interval.left_value - left_len * math.ceil(
+                                            abs(target_interval.right_value - interval.left_value) / left_len),
+                                        interval.right_value - left_len * math.ceil(
+                                            abs(target_interval.right_value - interval.left_value) / left_len),
                                         interval.left_open, interval.right_open)
                                     if Interval.inclusion(remain_interval, new_interval):
                                         return True
@@ -500,11 +519,13 @@ def fact_entailment(D, fact, base_interval, left_period, left_len, right_period,
                         for interval in repeated_intervals:
                             if interval.right_value - interval.left_value == right_len:
                                 # infinity range
-                               break
+                                break
                             else:
                                 new_interval = Interval(
-                                    interval.left_value - left_len * math.ceil(abs(target_interval.left_value-interval.left_value) / left_len),
-                                    interval.right_value - left_len * math.ceil(abs(target_interval.left_value-interval.left_value) / left_len),
+                                    interval.left_value - left_len * math.ceil(
+                                        abs(target_interval.left_value - interval.left_value) / left_len),
+                                    interval.right_value - left_len * math.ceil(
+                                        abs(target_interval.left_value - interval.left_value) / left_len),
                                     interval.left_open, interval.right_open)
                                 if Interval.inclusion(remain_interval, new_interval):
                                     break
@@ -523,15 +544,12 @@ def fact_entailment(D, fact, base_interval, left_period, left_len, right_period,
                                 return True
                             else:
                                 new_interval = Interval(
-                                    interval.left_value + right_len * math.ceil((target_interval.right_value - interval.right_value) / right_len),
-                                    interval.right_value + right_len * math.ceil((target_interval.right_value - interval.right_value) / right_len),
+                                    interval.left_value + right_len * math.ceil(
+                                        (target_interval.right_value - interval.right_value) / right_len),
+                                    interval.right_value + right_len * math.ceil(
+                                        (target_interval.right_value - interval.right_value) / right_len),
                                     interval.left_open, interval.right_open)
                                 if Interval.inclusion(remain_interval, new_interval):
                                     return True
                         else:
                             return False
-
-
-
-
-

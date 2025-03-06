@@ -20,3 +20,5 @@ experiments/JWS/*
 !experiments/RR2022/
 !experiments/AAAI2022/
 !experiments/AAAI2023/
+/paper
+/ppt
