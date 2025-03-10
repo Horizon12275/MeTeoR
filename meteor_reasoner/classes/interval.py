@@ -1,6 +1,7 @@
 import decimal
 from decimal import Decimal
 
+
 class Interval:
     def __init__(self, left_value, right_value, left_open, right_open):
         """
@@ -125,7 +126,8 @@ class Interval:
             if intersection is not None:
                 new_interval_list.append(intersection)
             if intervals1[i].right_value < intervals2[j].right_value or (
-                intervals1[i].right_value == intervals2[j].right_value and intervals1[i].right_open and not intervals2[j].right_open):
+                    intervals1[i].right_value == intervals2[j].right_value and intervals1[i].right_open and not
+            intervals2[j].right_open):
                 i += 1
             else:
                 j += 1
@@ -145,10 +147,10 @@ class Interval:
         """
         for interval1 in intervals1:
             for interval2 in intervals2:
-               if not Interval.inclusion(interval1, interval2):
+                if not Interval.inclusion(interval1, interval2):
                     continue
-               else:
-                   break
+                else:
+                    break
             else:
                 return False
 
@@ -178,6 +180,7 @@ class Interval:
 
     @staticmethod
     def diff(interval_src, interval_list):
+        # return intervals in src but not in list
         res = []
         for interval in interval_list:
             if Interval.inclusion(interval_src, interval):
@@ -197,38 +200,38 @@ class Interval:
                                         False, False))
                 if interval_src.right_value == interval.right_value:
                     if interval_src.right_open == interval.right_open:
-                         return res
+                        return res
                     elif not interval_src.right_open and interval.right_open:
-                         interval_src = Interval(interval_src.right_value, interval_src.right_value,
-                                                 interval_src.right_open, interval.right_open)
+                        interval_src = Interval(interval_src.right_value, interval_src.right_value,
+                                                interval_src.right_open, interval.right_open)
                     else:
-                         return res
+                        return res
                 else:
                     interval_src = Interval(interval.right_value, interval_src.right_value,
-                                                not interval.right_open, interval_src.right_open)
+                                            not interval.right_open, interval_src.right_open)
 
             elif not Interval.intersection(interval, interval_src) and \
                     interval_src.right_value <= interval.left_value:
-                    # [1,2], [[3,5], [7,10]
-                    res.append(interval_src)
-                    return res
+                # [1,2], [[3,5], [7,10]
+                res.append(interval_src)
+                return res
 
             elif Interval.intersection(interval, interval_src):
-                 # [3,5], [[4, 8]]
-                 intersection_part = Interval.intersection(interval_src, interval)
+                # [3,5], [[4, 8]]
+                intersection_part = Interval.intersection(interval_src, interval)
 
-                 if interval_src.right_value >= interval.right_value:
-                     interval_src = Interval(intersection_part.right_value, interval_src.right_value,
-                                             not intersection_part.right_open, interval_src.right_open)
+                if interval_src.right_value > interval.right_value or (
+                        interval_src.right_value == interval.right_value and not interval_src.right_open and interval.right_open):
+                    interval_src = Interval(intersection_part.right_value, interval_src.right_value,
+                                            not intersection_part.right_open, interval_src.right_open)
 
-                 else:
-                     res.append(Interval(interval_src.left_value, intersection_part.left_value,
-                                         interval_src.left_open, not intersection_part.left_open))
-                     return res
+                else:
+                    res.append(Interval(interval_src.left_value, intersection_part.left_value,
+                                        interval_src.left_open, not intersection_part.left_open))
+                    return res
 
         res.append(interval_src)
         return res
-
 
     @staticmethod
     def diff_list_incre(t1_list, t2_list):
@@ -243,7 +246,7 @@ class Interval:
         """
         if len(t2_list) == 0:
             return t1_list
-        
+
         result = t1_list[:]
         for t2 in t2_list:
             new_result = []
@@ -253,7 +256,7 @@ class Interval:
             result = new_result
 
         return result
-    
+
     @staticmethod
     def diff_list(t1_list, t2_list):
         """
@@ -280,13 +283,16 @@ class Interval:
                 else:
                     intersect = Interval.intersection(interval1, interval2)
                     if interval1.left_value >= intersect.left_value:
-                        mover = Interval(intersect.right_value, interval1.right_value, not intersect.right_open, interval1.right_open)
+                        mover = Interval(intersect.right_value, interval1.right_value, not intersect.right_open,
+                                         interval1.right_open)
                     else:
-                        left = Interval(interval1.left_value, intersect.left_value, interval1.left_value, not intersect.left_open)
+                        left = Interval(interval1.left_value, intersect.left_value, interval1.left_value,
+                                        not intersect.left_open)
                         res.append(left)
-                        mover = Interval(intersect.right_value, interval1.right_value, not intersect.right_open, interval1.right_open)
+                        mover = Interval(intersect.right_value, interval1.right_value, not intersect.right_open,
+                                         interval1.right_open)
             if mover is not None:
-                  res.append(mover)
+                res.append(mover)
         return res
 
     @staticmethod
@@ -396,7 +402,7 @@ class Interval:
         else:
             right_value = v2.right_value
             if v1.right_open != v2.right_open:
-                right_open =True
+                right_open = True
             else:
                 right_open = v2.right_open
 
@@ -466,7 +472,7 @@ class Interval:
     def __eq__(self, other):
         if isinstance(other, Interval):
             return self.left_value == other.left_value and self.right_value == other.right_value \
-                   and self.left_open == other.left_open and self.right_open == other.right_open
+                and self.left_open == other.left_open and self.right_open == other.right_open
 
     @staticmethod
     def sub(v1, v2):
@@ -593,13 +599,12 @@ class Interval:
 
 
 if __name__ == "__main__":
-
     # a1 = Interval(1.5, 2.5, True, False)
     # a2 = Interval(2.5, 4, True, False)
     # print(Interval.intersection(a1, a2))
     # exit()
 
-    #b = [Interval(0.0, 0.0, False, False), Interval(2.0, 3.0, False, False)]
+    # b = [Interval(0.0, 0.0, False, False), Interval(2.0, 3.0, False, False)]
     a = [Interval(0, 3, False, False), Interval(4, 5, False, False)]
     c = [Interval(2, 2, False, False), Interval(1, 1, False, False)]
 

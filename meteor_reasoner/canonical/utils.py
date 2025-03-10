@@ -297,7 +297,6 @@ def find_periods(CR):
                 else:
                     for interval1 in T:
                         diff_delta += Interval.diff(interval1, CR.D[head_predicate][head_entity])
-                        print(interval1)
 
                 for cr_interval in diff_delta:
                     if Interval.intersection(cr_interval, common_fragment.base_interval):
