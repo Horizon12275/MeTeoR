@@ -179,59 +179,46 @@ class Interval:
                 return True
 
     @staticmethod
+    def union_sub(interval1, interval2):
+        # return intervals in 1 but not in 2
+        if Interval.intersection(interval1, interval2):
+            if Interval.inclusion(interval1, interval2):  # [3,4],[2,5];[1,2],[1,2]
+                return []
+            else:
+                if (interval1.left_value > interval2.left_value or (
+                        interval1.left_value == interval2.left_value and not (interval1.left_open==False and interval2.left_open==True))) and (
+                        interval1.right_value > interval2.right_value or (
+                        interval1.right_value == interval2.right_value and not (interval1.right_open==True and interval2.right_open==False))):  # [1,3],[0,2];[1,3],[1,2]
+                    return [Interval(interval2.right_value, interval1.right_value, not interval2.right_open,
+                                     interval1.right_open)]
+                if (interval1.right_value < interval2.right_value or (
+                        interval1.right_value == interval2.right_value and not (interval1.right_open==False and interval2.right_open==True))) and (
+                        interval1.left_value < interval2.left_value or (
+                        interval1.left_value == interval2.left_value and not (interval1.left_open==True and interval2.left_open==False))):  # [1,3),[2,4);[1,3),[2,3)
+                    return [Interval(interval1.left_value, interval2.left_value, interval1.left_open,
+                                     not interval2.left_open)]
+
+                # [1,4],[2,3]
+                return [
+                    Interval(interval1.left_value, interval2.left_value, interval1.left_open, not interval2.left_open),
+                    Interval(interval2.right_value, interval1.right_value, not interval2.right_open,
+                             interval1.right_open)]
+        else:  # [1,2],[3,4]
+            return [interval1]
+
+    @staticmethod
     def diff(interval_src, interval_list):
         # return intervals in src but not in list
-        res = []
-        for interval in interval_list:
-            if Interval.inclusion(interval_src, interval):
-                # [3,4], [[3,5],[7,10]]
-                return res
-            elif Interval.inclusion(interval, interval_src):
-                if interval_src == interval:
-                    return res
-
-                # [2,10], [[3,5],[6,8],[9.5,10]
-                if interval_src.left_value < interval.left_value:
-                    res.append(Interval(interval_src.left_value, interval.left_value,
-                                        interval_src.left_open, not interval.left_open))
-                elif interval_src.left_value == interval.left_value and not interval_src.left_open \
-                        and interval.left_open:
-                    res.append(Interval(interval_src.left_value, interval.left_value,
-                                        False, False))
-                if interval_src.right_value == interval.right_value:
-                    if interval_src.right_open == interval.right_open:
-                        return res
-                    elif not interval_src.right_open and interval.right_open:
-                        interval_src = Interval(interval_src.right_value, interval_src.right_value,
-                                                interval_src.right_open, interval.right_open)
-                    else:
-                        return res
-                else:
-                    interval_src = Interval(interval.right_value, interval_src.right_value,
-                                            not interval.right_open, interval_src.right_open)
-
-            elif not Interval.intersection(interval, interval_src) and \
-                    interval_src.right_value <= interval.left_value:
-                # [1,2], [[3,5], [7,10]
-                res.append(interval_src)
-                return res
-
-            elif Interval.intersection(interval, interval_src):
-                # [3,5], [[4, 8]]
-                intersection_part = Interval.intersection(interval_src, interval)
-
-                if interval_src.right_value > interval.right_value or (
-                        interval_src.right_value == interval.right_value and not interval_src.right_open and interval.right_open):
-                    interval_src = Interval(intersection_part.right_value, interval_src.right_value,
-                                            not intersection_part.right_open, interval_src.right_open)
-
-                else:
-                    res.append(Interval(interval_src.left_value, intersection_part.left_value,
-                                        interval_src.left_open, not intersection_part.left_open))
-                    return res
-
-        res.append(interval_src)
-        return res
+        interval_src_list = [interval_src]
+        for interval2 in interval_list:
+            new_src_list = []
+            for interval1 in interval_src_list:
+                sub_result = Interval.union_sub(interval1, interval2)
+                new_src_list.extend(sub_result)
+            interval_src_list = new_src_list
+            if interval_src_list.__len__() == 0:
+                return []
+        return interval_src_list
 
     @staticmethod
     def diff_list_incre(t1_list, t2_list):
