@@ -383,7 +383,7 @@ def find_periods(CR):
                 for key, value in right_period.items():
                     right_period[key] = coalescing(value)
 
-                return CR.D, common_fragment.common, None, None, None, varrho_right, right_period, right_len
+                return CR.D, common_fragment.common, None, None, None, varrho_right, right_period, right_len#有右周期无左周期
         else:
             varrho_left, varrho_left_dict = find_left_period(CR.D, varrho_left_range, CR)
             if varrho_left is not None:
@@ -394,7 +394,7 @@ def find_periods(CR):
                             left_period[value].append(key)
                     for key, value in left_period.items():
                         left_period[key] = coalescing(value)
-                    return CR.D, common_fragment.common, varrho_left, left_period, left_len, None, None, None
+                    return CR.D, common_fragment.common, varrho_left, left_period, left_len, None, None, None#有左周期无右周期
 
                 else:
                     varrho_right, varrho_right_dict = find_right_period(CR.D, varrho_right_range, CR)
@@ -412,7 +412,7 @@ def find_periods(CR):
                                 right_period[value].append(key)
                         for key, value in right_period.items():
                             right_period[key] = coalescing(value)
-                        return CR.D, common_fragment.common, varrho_left, left_period, left_len, varrho_right, right_period, right_len
+                        return CR.D, common_fragment.common, varrho_left, left_period, left_len, varrho_right, right_period, right_len#左右均有周期
 
         # 将 delta_new 中的新事实加入 CR.D，并更新索引
         for tmp_predicate in delta_new:
