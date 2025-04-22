@@ -121,10 +121,12 @@ def seminaive_join(rule, D,  delta_old, delta_new, D_index=None):
                         ground_body(global_literal_index + 1,visited, {**delta, **tmp_delta}, {**context, **tmp_context})
 
                 else:
-                    for left_entity, tmp_context1 in ground_generator(current_literal.left_literal, context, D, D_index, delta_old, global_literal_index==visited, global_literal_index > visited):
-                        for right_entity, tmp_context2 in ground_generator(current_literal.right_literal, {**context, **tmp_context1}, D, D_index, delta_old, global_literal_index==visited, global_literal_index > visited):
+                    print ("left_literal: ", current_literal.left_literal)
+                    print ("right_literal: ", current_literal.right_literal)
+                    for left_entity, tmp_context1 in ground_generator(current_literal.left_literal, context, D):
+                        for right_entity, tmp_context2 in ground_generator(current_literal.right_literal.atom,{**context, **tmp_context1}, D):
                             tmp_delta = {global_literal_index: [left_entity, right_entity]}
-                            ground_body(global_literal_index + 1, visited, {**delta, **tmp_delta}, {**context, **tmp_context1, **tmp_context2})
+                            ground_body(global_literal_index + 1, True, {**delta, **tmp_delta}, {**context, **tmp_context1, **tmp_context2})
 
     if delta_old is None:
         return

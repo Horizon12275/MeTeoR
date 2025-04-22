@@ -28,7 +28,11 @@ def seminaive_combine(D, delta_new, delta_old, D_index=None):
     for head_predicate in delta_new:
         for entity, T in delta_new[head_predicate].items():
             if head_predicate not in D or entity not in D[head_predicate]:
-                D[head_predicate][entity] = D[head_predicate][entity] + T
+                try:
+                    # the following line may cause error due to the empty D[head_predicate][entity]
+                    D[head_predicate][entity] = D[head_predicate][entity] + T
+                except:
+                    D[head_predicate][entity] = T
                 delta_old[head_predicate][entity] = delta_old[head_predicate][entity] + T
                 # update index
                 for i, item in enumerate(entity):
@@ -71,7 +75,7 @@ def naive_combine(D, delta_new, D_index=None):
                     # the following line may cause error due to the empty D[head_predicate][entity]
                     D[head_predicate][entity] = D[head_predicate][entity] + T
                 except:
-                    print("debug")
+                    # print("debug")
                     # print("head_predicate:", head_predicate)
                     # for item in entity:
                     #     print(item.name)

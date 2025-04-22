@@ -91,7 +91,8 @@ def apply(literal, D, delta_old=None):
                 if delta_old is not None and predicate in delta_old and entity in delta_old[predicate]:
                     full_intervals = copy.deepcopy(D[predicate][entity])
                     for remove_interval in delta_old[predicate][entity]:
-                        full_intervals.remove(remove_interval)
+                        if remove_interval in full_intervals:
+                            full_intervals.remove(remove_interval)
                     return full_intervals
                 else:
                     return D[predicate][entity]

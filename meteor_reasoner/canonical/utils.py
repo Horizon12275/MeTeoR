@@ -342,8 +342,10 @@ def find_periods(CR):
                 for tmp_entity in delta_new[tmp_predicate]:
                     # just to update index here
                     if tmp_predicate not in CR.D or tmp_entity not in CR.D[tmp_predicate]:
-                        CR.D[tmp_predicate][tmp_entity] = CR.D[tmp_predicate][tmp_entity] + delta_new[tmp_predicate][
-                            tmp_entity]
+                        try:
+                            CR.D[tmp_predicate][tmp_entity] = CR.D[tmp_predicate][tmp_entity] + delta_new[tmp_predicate][tmp_entity]
+                        except:
+                            CR.D[tmp_predicate][tmp_entity] = delta_new[tmp_predicate][tmp_entity]
                         # update index
                         for i, item in enumerate(tmp_entity):
                             CR.D_index[tmp_predicate][str(i) + "@" + item.name].append(tmp_entity)

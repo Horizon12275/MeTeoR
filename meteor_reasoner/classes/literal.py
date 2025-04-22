@@ -111,7 +111,11 @@ class BinaryLiteral:
     def __hash__(self):
         return hash("BiLiteral:" + str(self.left_literal) + str(self.operator) + str(self.right_literal))
 
-
+    def get_Left_Literal(self):
+        return self.left_literal
+    
+    def get_Right_Literal(self):
+        return self.right_literal
 
 
 

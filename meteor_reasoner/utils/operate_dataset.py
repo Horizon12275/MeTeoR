@@ -13,6 +13,38 @@ def get_min_max_rational(D):
                 max_val = max(max_val, intv.right_value)
     return min_val, max_val
 
+def print_dataset_with_entity_name(D, entity_name):
+    """
+    Print all facts in D with the specified entity name.
+    Args:
+        D (a dictionary object):
+        entity_name (str): The name of the entity.
+    """
+    for predicate in D:
+        for entity, intervals in D[predicate].items():
+            if ",".join([item.name for item in entity]) == entity_name:
+                for interval in intervals:
+                    print(predicate + "(" + ",".join([item.name for item in entity]) + ")@" + str(interval))
+
+def datase_is_empty(D):
+    """
+    Check if the dataset is empty.
+    Args:
+        D (a dictionary object):
+
+    Returns:
+        bool: True if the dataset is empty, False otherwise.
+    """
+    for predicate in D:
+        for entity, intervals in D[predicate].items():
+            for interval in intervals:
+                if len(entity) == 1 and entity[0].name == "nan":
+                     print("Dataset is not empty")
+                     return False
+                else:
+                    print("Dataset is not empty")
+                    return False
+    return True
 
 def print_dataset(D):
     """
@@ -263,6 +295,6 @@ def dataset_Same(D1, D2):
     except Exception as e:
         print("The error is in the dataset_Same")
         print(f"Exception: {e}")
-        traceback.print_exc()
+        # traceback.print_exc()
         return False
     return True
