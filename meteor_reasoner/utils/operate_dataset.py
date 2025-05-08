@@ -39,10 +39,10 @@ def datase_is_empty(D):
         for entity, intervals in D[predicate].items():
             for interval in intervals:
                 if len(entity) == 1 and entity[0].name == "nan":
-                     print("Dataset is not empty")
+                     #print("Dataset is not empty")
                      return False
                 else:
-                    print("Dataset is not empty")
+                    #print("Dataset is not empty")
                     return False
     return True
 

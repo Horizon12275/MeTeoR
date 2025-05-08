@@ -276,7 +276,6 @@ def entail(fact, D):
             else:
                 return False
 
-
 def find_periods(CR):
     left_period, left_len = defaultdict(list), 0
     right_period, right_len = defaultdict(list), 0
@@ -413,6 +412,164 @@ def find_periods(CR):
                         for key, value in right_period.items():
                             right_period[key] = coalescing(value)
                         return CR.D, common_fragment.common, varrho_left, left_period, left_len, varrho_right, right_period, right_len#左右均有周期
+
+        # 将 delta_new 中的新事实加入 CR.D，并更新索引
+        for tmp_predicate in delta_new:
+            for tmp_entity in delta_new[tmp_predicate]:
+                if tmp_predicate not in CR.D or tmp_entity not in CR.D[tmp_predicate]:
+                    CR.D[tmp_predicate][tmp_entity] = delta_new[tmp_predicate][tmp_entity]
+                    # update index
+                    for i, item in enumerate(tmp_entity):
+                        CR.D_index[tmp_predicate][str(i) + "@" + item.name].append(tmp_entity)
+                    if len(tmp_entity) > 2:
+                        for i, item1 in enumerate(tmp_entity):
+                            for j, item2 in enumerate(tmp_entity):
+                                if j <= i:
+                                    continue
+                                CR.D_index[tmp_predicate][
+                                    str(i) + "@" + item1.name + "||" + str(j) + "@" + item2.name].append(tmp_entity)
+                elif tmp_predicate in CR.D and tmp_entity in CR.D[tmp_predicate]:
+                    CR.D[tmp_predicate][tmp_entity] += delta_new[tmp_predicate][tmp_entity]
+
+        coalescing_d(CR.D)
+
+
+def find_periods_k(CR):
+    left_period, left_len = defaultdict(list), 0
+    right_period, right_len = defaultdict(list), 0
+    number_mat = 0
+    while True:
+        common_fragment = CommonFragment(CR.base_interval)
+        common_fragment.common = Interval(Decimal("-inf"), Decimal("+inf"), True, True)
+
+        delta_new = naive_immediate_consequence_operator(D=CR.D, rules=CR.Program, D_index=CR.D_index)
+        # 计算新的推理结果
+        number_mat += 1
+        diff_delta = []
+        terminate_flag = False
+        for head_predicate in delta_new:
+            for head_entity, T in delta_new[head_predicate].items():
+                if head_predicate not in CR.D or head_entity not in CR.D[head_predicate]:
+                    diff_delta = copy.deepcopy(T)
+                else:
+                    for interval1 in T:
+                        diff_delta += Interval.diff(interval1, CR.D[head_predicate][head_entity])
+
+                for cr_interval in diff_delta:
+                    if Interval.intersection(cr_interval, common_fragment.base_interval):
+                        # it denotes that now |\varrho_max != Dnext |\varrho_max
+                        # diff_delta 中的区间和 common_fragment 存在交集
+                        common_fragment.cr_flag = False
+                        common_fragment.common = None
+                        terminate_flag = True
+                        break
+                    else:
+                        # 若没有交集，则更新 common_fragment 的左右端点
+                        if cr_interval.right_value <= common_fragment.base_interval.left_value:
+                            if cr_interval.right_value >= common_fragment.common.left_value:
+                                common_fragment.common.left_value = cr_interval.right_value
+                                common_fragment.common.left_open = not cr_interval.right_open
+                        elif cr_interval.left_value >= common_fragment.base_interval.right_value:
+                            if cr_interval.left_value <= common_fragment.common.right_value:
+                                common_fragment.common.right_value = cr_interval.left_value
+                                common_fragment.common.right_open = not cr_interval.left_open
+                        else:
+                            print(str(cr_interval))
+                            print(str(common_fragment.common))
+                            raise ValueError("Error Happen")
+                if terminate_flag:
+                    break
+
+            if terminate_flag:
+                break
+
+        if len(diff_delta) == 0:
+            # fixpoint
+            # diff_delta 为空，表明数据已达饱和，即推理过程不再产生新的事实。
+            common_fragment.common.left_value = decimal.Decimal("-inf")
+            common_fragment.common.left_open = True
+            common_fragment.common.right_value = decimal.Decimal("+inf")
+            common_fragment.common.right_open = True
+            return CR.D, common_fragment.common, None, None, None, None, None, None, number_mat
+
+        if common_fragment.common is None or abs(CR.min_x - common_fragment.common.left_value) <= 2 * CR.w or abs(
+                common_fragment.common.right_value - CR.max_x) <= 2 * CR.w:
+            # add the new facts to the dataset
+            for tmp_predicate in delta_new:
+                for tmp_entity in delta_new[tmp_predicate]:
+                    # just to update index here
+                    if tmp_predicate not in CR.D or tmp_entity not in CR.D[tmp_predicate]:
+                        try:
+                            CR.D[tmp_predicate][tmp_entity] = CR.D[tmp_predicate][tmp_entity] + delta_new[tmp_predicate][tmp_entity]
+                        except:
+                            CR.D[tmp_predicate][tmp_entity] = delta_new[tmp_predicate][tmp_entity]
+                        # update index
+                        for i, item in enumerate(tmp_entity):
+                            CR.D_index[tmp_predicate][str(i) + "@" + item.name].append(tmp_entity)
+                        if len(tmp_entity) > 2:
+                            for i, item1 in enumerate(tmp_entity):
+                                for j, item2 in enumerate(tmp_entity):
+                                    if j <= i:
+                                        continue
+                                    CR.D_index[tmp_predicate][
+                                        str(i) + "@" + item1.name + "||" + str(j) + "@" + item2.name].append(tmp_entity)
+                    elif tmp_predicate in CR.D and tmp_entity in CR.D[tmp_predicate]:
+                        CR.D[tmp_predicate][tmp_entity] += delta_new[tmp_predicate][tmp_entity]
+            coalescing_d(CR.D)
+            continue
+
+        # it denotes that now |\varrho_max == Dnext |\varrho_max and \varrho_max != \emptyset and t=t_D^- \in \varrho_max,
+        # so it satisfies the while conditions in line 4 and line 12
+        # \varrho_max = [common_fragment.common.left_value, common_fragment.common.right_value]
+        varrho_left_range = Interval(common_fragment.common.left_value, CR.min_x, common_fragment.common.left_open,
+                                     False)
+        varrho_right_range = Interval(CR.max_x, common_fragment.common.right_value, False,
+                                      common_fragment.common.right_open)
+
+        if varrho_left_range.left_value in [Decimal("-inf")] and varrho_right_range.right_value in [Decimal("+inf")]:
+            return CR.D, common_fragment.common, None, None, None, None, None, None, number_mat
+
+        # 公共片段不为空，则函数通过调用 find_left_period 和 find_right_period 找到左、右两端的周期性区间。
+        if varrho_left_range.left_value in [Decimal("-inf")]:
+            varrho_right, varrho_right_dict = find_right_period(CR.D, varrho_right_range, CR)
+            if varrho_right is not None:
+                right_len = varrho_right.right_value - varrho_right.left_value
+                for key, values in varrho_right_dict.items():
+                    for value in values:
+                        right_period[value].append(key)
+                for key, value in right_period.items():
+                    right_period[key] = coalescing(value)
+
+                return CR.D, common_fragment.common, None, None, None, varrho_right, right_period, right_len, number_mat
+        else:
+            varrho_left, varrho_left_dict = find_left_period(CR.D, varrho_left_range, CR)
+            if varrho_left is not None:
+                if varrho_right_range.right_value in [Decimal("+inf")]:
+                    left_len = varrho_left.right_value - varrho_left.left_value
+                    for key, values in varrho_left_dict.items():
+                        for value in values:
+                            left_period[value].append(key)
+                    for key, value in left_period.items():
+                        left_period[key] = coalescing(value)
+                    return CR.D, common_fragment.common, varrho_left, left_period, left_len, None, None, None, number_mat
+
+                else:
+                    varrho_right, varrho_right_dict = find_right_period(CR.D, varrho_right_range, CR)
+                    if varrho_right is not None:
+                        left_len = varrho_left.right_value - varrho_left.left_value
+                        for key, values in varrho_left_dict.items():
+                            for value in values:
+                                left_period[value].append(key)
+                        for key, value in left_period.items():
+                            left_period[key] = coalescing(value)
+
+                        right_len = varrho_right.right_value - varrho_right.left_value
+                        for key, values in varrho_right_dict.items():
+                            for value in values:
+                                right_period[value].append(key)
+                        for key, value in right_period.items():
+                            right_period[key] = coalescing(value)
+                        return CR.D, common_fragment.common, varrho_left, left_period, left_len, varrho_right, right_period, right_len, number_mat
 
         # 将 delta_new 中的新事实加入 CR.D，并更新索引
         for tmp_predicate in delta_new:

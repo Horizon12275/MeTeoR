@@ -16,7 +16,7 @@ def seminaive_immediate_consequence_operator(rules, D, D_index, delta_old=None):
     delta_new = defaultdict(lambda: defaultdict(list))
     for i, rule in enumerate(rules):
         seminaive_join(rule, D, delta_old, delta_new, D_index=D_index)
-
+    coalescing_d(delta_new)
     return delta_new
 
 def incre_seminaive_immediate_consequence_operator(rules, D, D_index, delta_old=None):

@@ -23,7 +23,7 @@ def seminaive_join(rule, D,  delta_old, delta_new, D_index=None):
     literals = rule.body + rule.negative_body
 
     def ground_body(global_literal_index, visited, delta, context):
-        print("ground_body: ", global_literal_index, visited, delta, context)
+        #print("ground_body: ", global_literal_index, visited, delta, context)
         if global_literal_index == len(literals):
             T = []
             for i in range(len(rule.body)):
@@ -35,16 +35,16 @@ def seminaive_join(rule, D,  delta_old, delta_new, D_index=None):
                         grounded_literal.set_entity(delta[i][0])
                 if i == visited and isinstance(grounded_literal, BinaryLiteral):
                     t = apply(grounded_literal, D)
-                    print("if i == visited and isinstance(grounded_literal, BinaryLiteral): ", t)
+                    #print("if i == visited and isinstance(grounded_literal, BinaryLiteral): ", t)
                 elif i == visited:
                     t = apply(grounded_literal, delta_old)
-                    print("if i == visited: ", t)
+                    #print("if i == visited: ", t)
                 elif i <= visited:
                     t = apply(grounded_literal, D)
-                    print("elif i <= visited: ", t)
+                    #print("elif i <= visited: ", t)
                 else:
                     t = apply(grounded_literal, D, delta_old)
-                    print("else: ", t)
+                    #print("else: ", t)
                 if len(t) == 0:
                     break
                 else:
@@ -130,14 +130,10 @@ def seminaive_join(rule, D,  delta_old, delta_new, D_index=None):
                 else:
                     if global_literal_index == visited:
                         for left_entity, tmp_context1 in ground_generator(current_literal.left_literal, context, D):
-                            for right_entity, tmp_context2 in ground_generator(current_literal.right_literal, {**context, **tmp_context1},  delta_old):
+                            for right_entity, tmp_context2 in ground_generator(current_literal.right_literal, {**context, **tmp_context1},  D):
                                 tmp_delta = {global_literal_index: [left_entity, right_entity]}
                                 ground_body(global_literal_index + 1, visited, {**delta, **tmp_delta}, {**context, **tmp_context1, **tmp_context2})
 
-                        for left_entity, tmp_context1 in ground_generator(current_literal.left_literal, context,  delta_old):
-                            for right_entity, tmp_context2 in ground_generator(current_literal.right_literal, {**context, **tmp_context1},D, D_index, delta_old, global_literal_index==visited, global_literal_index > visited):
-                                tmp_delta = {global_literal_index: [left_entity, right_entity]}
-                                ground_body(global_literal_index + 1, visited, {**delta, **tmp_delta}, {**context, **tmp_context1, **tmp_context2})
 
                     elif global_literal_index > visited:
                         for left_entity, tmp_context1 in ground_generator(current_literal.left_literal, context,  D, D_index, delta_old, global_literal_index==visited, global_literal_index > visited):
