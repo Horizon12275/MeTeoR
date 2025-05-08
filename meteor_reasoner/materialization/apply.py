@@ -2,6 +2,7 @@ from meteor_reasoner.classes.literal import *
 from meteor_reasoner.classes.interval import *
 from meteor_reasoner.classes.atom import *
 import copy
+from meteor_reasoner.utils.operate_dataset import *
 
 
 def since_deduce(literal, left_interval, right_interval):
@@ -174,6 +175,93 @@ def apply(literal, D, delta_old=None):
 
             return T
 
+
+def apply_binary_literal_seminaive(literal, I , delta):
+    """
+    Apply MTL operator(s) to a binary literal.
+    Args:
+        literal (Literal BinaryLiteral Instance):
+        D (defaultdict):
+
+    Returns:
+        A list of Interval instances.
+    """
+
+    I_union_delta = dataset_union(I, delta)
+
+    if not isinstance(literal, BinaryLiteral):
+        print("The literal is not a binary literal!")
+    else:
+        # Two Rounds:
+        # Fist round: apply the left literal in delta and the right literal in I_union_delta
+        op_name = literal.get_op_name()
+        T = []
+        if op_name in ["Until", "Since"]:
+            left_literal = literal.left_literal
+            right_literal = literal.right_literal
+
+            if left_literal.get_predicate() == "Bottom" or right_literal.get_predicate() == "Bottom":
+                raise ValueError("It is not allowed to have the bottom predicate in the left side "
+                                 "or the right side of a binary literal ")
+            if left_literal.get_predicate() == "Top":
+                T1 = [Interval(float('-inf'), float('inf'), True, True)]
+            else:
+                T1 = apply(left_literal, delta)
+
+            if right_literal.get_predicate() == "Top":
+                T2 = [Interval(float('-inf'), float('inf'), True, True)]
+            else:
+                T2 = apply(right_literal, I_union_delta)
+
+            if op_name == "Until":
+                if T1 and T2:
+                    for t1 in T1:
+                        for t2 in T2:
+                            t = until_deduce(literal, t1, t2)
+                            if t:
+                                T.append(t)
+            else:
+                if T1 and T2:
+                    for t1 in T1:
+                        for t2 in T2:
+                            t = since_deduce(literal, t1, t2)
+                            if t:
+                                T.append(t)
+
+            # Second round: apply the left literal in I_union_delta and the right literal in delta
+            if op_name in ["Until", "Since"]:
+                left_literal = literal.left_literal
+                right_literal = literal.right_literal
+
+            if left_literal.get_predicate() == "Bottom" or right_literal.get_predicate() == "Bottom":
+                raise ValueError("It is not allowed to have the bottom predicate in the left side "
+                                 "or the right side of a binary literal ")
+            if left_literal.get_predicate() == "Top":
+                T1 = [Interval(float('-inf'), float('inf'), True, True)]
+            else:
+                T1 = apply(left_literal, I)
+
+            if right_literal.get_predicate() == "Top":
+                T2 = [Interval(float('-inf'), float('inf'), True, True)]
+            else:
+                T2 = apply(right_literal, delta)
+
+            if op_name == "Until":
+                if T1 and T2:
+                    for t1 in T1:
+                        for t2 in T2:
+                            t = until_deduce(literal, t1, t2)
+                            if t:
+                                T.append(t)
+            else:
+                if T1 and T2:
+                    for t1 in T1:
+                        for t2 in T2:
+                            t = since_deduce(literal, t1, t2)
+                            if t:
+                                T.append(t)
+        
+            return T
 
 def reverse_apply(literal, D):
     """
