@@ -28,7 +28,7 @@ def incre_seminaive_immediate_consequence_operator(rules, D, D_index, delta_old=
             for interval in delta_old[predicate][entity]:
                 if entity in D[predicate]:
                     for old_interval in D[predicate][entity]:
-                        if Interval.inclusion(interval, old_interval):
+                        if Interval.intersection(interval, old_interval) is not None:
                             # print interval and old_interval
                             # print("\ninterval: ", interval)
                             # print("old_interval: ", old_interval)
