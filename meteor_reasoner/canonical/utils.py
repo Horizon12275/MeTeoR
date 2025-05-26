@@ -625,7 +625,7 @@ def fact_entailment(D, fact, base_interval, left_period, left_len, right_period,
 
                         else:
                             remain_interval = remain_interval[0]
-                            repeated_intervals = right_period[fact.predicate][fact.entity]
+                            repeated_intervals = right_period[str(Atom(fact.predicate, fact.entity))]
                             for interval in repeated_intervals:
                                 if interval.right_value - interval.left_value == right_len:
                                     # infinity range
@@ -650,7 +650,7 @@ def fact_entailment(D, fact, base_interval, left_period, left_len, right_period,
 
                         else:
                             remain_interval = remain_interval[0]
-                            repeated_intervals = left_period[fact.predicate][fact.entity]
+                            repeated_intervals = left_period[str(Atom(fact.predicate, fact.entity))]
                             for interval in repeated_intervals:
                                 if interval.right_value - interval.left_value == right_len:
                                     # infinity range
