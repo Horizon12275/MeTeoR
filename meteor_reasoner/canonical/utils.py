@@ -277,6 +277,7 @@ def entail(fact, D):
                 return False
 
 def find_periods(CR):
+    print("Finding periods...")
     left_period, left_len = defaultdict(list), 0
     right_period, right_len = defaultdict(list), 0
     number_mat = 0

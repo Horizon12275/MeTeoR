@@ -31,9 +31,9 @@ class CanonicalRepresentation:
         build_index(self.D,  self.D_index)
         self.points, self.min_x, self.max_x = get_dataset_points_x(self.D, min_x_flag=True)
 
-        print("The w is:{}".format(self.w))
-        print("The maximum number in the database:{}".format(self.max_x))
-        print("The minimum number in the database:{}".format(self.min_x))
+        # print("The w is:{}".format(self.w))
+        # print("The maximum number in the database:{}".format(self.max_x))
+        # print("The minimum number in the database:{}".format(self.min_x))
         self.base_interval = Interval(self.min_x, self.max_x, False, False)
         self.z, self.gcd = get_gcd(self.Program)
         self.left_initial_ruler_intervals, self.right_initial_ruler_intervals, self.pattern_num, self.pattern_len = get_initial_ruler_intervals(self.points[:], left_border= self.min_x-self.w, right_border=self.max_x+self.w, gcd=self.gcd)

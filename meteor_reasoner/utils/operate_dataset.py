@@ -298,3 +298,21 @@ def dataset_Same(D1, D2):
         # traceback.print_exc()
         return False
     return True
+
+def count_facts(D):
+    """
+    Count the number of facts in the dataset D.
+    Args:
+        D (a dictionary object): The dataset where each D[predicate][entity] is a list of Interval instances.
+
+    Returns:
+        int: The total number of facts in the dataset.
+    """
+    count = 0
+    for predicate in D:
+        if type(D[predicate]) == list:
+            count += len(D[predicate])
+        else:
+            for entity, intervals in D[predicate].items():
+                count += len(intervals)
+    return count
