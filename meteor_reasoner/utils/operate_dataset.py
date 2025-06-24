@@ -247,6 +247,28 @@ def dataset_union(D1, D2):
             D[predicate][entity] = Interval.list_union(intervals1, intervals2)
     return D
 
+def dataset_union_opt(D_large, D_small):
+    D = defaultdict(lambda: defaultdict(list))
+    # 先处理小数据集
+    for predicate in D_small:
+        for entity in D_small[predicate]:
+            if entity in D_large.get(predicate, {}):
+                D[predicate][entity] = Interval.list_union(
+                    D_large[predicate][entity], D_small[predicate][entity]
+                )
+            else:
+                D[predicate][entity] = D_small[predicate][entity]
+    
+    # 再处理大数据集独有的部分
+    for predicate in D_large:
+        if predicate not in D_small:
+            D[predicate] = D_large[predicate]
+        else:
+            for entity in D_large[predicate]:
+                if entity not in D_small[predicate]:
+                    D[predicate][entity] = D_large[predicate][entity]
+    return D
+
 def dataset_difference(D1, D2):
     """
     Compute the difference of two datasets
@@ -268,6 +290,52 @@ def dataset_difference(D1, D2):
                     D[predicate][entity] = D1[predicate][entity]
         else:
             D[predicate] = D1[predicate]
+    return D
+
+def dataset_difference_inplace(D1, D2):
+    """
+    Compute the difference of two datasets by modifying D1 in-place, optimized for cases where D1 >> D2
+    Args:
+        D1 (a dictionary object): Will be modified in-place (assumed to be much larger than D2)
+        D2 (a dictionary object): The dataset to subtract from D1
+    """
+    for predicate in D2:
+        if predicate in D1:
+            for entity in D2[predicate]:
+                if entity in D1[predicate]:
+                    # Compute the difference and update in-place
+                    diff_intervals = Interval.diff_list_incre(D1[predicate][entity], D2[predicate][entity])
+                    if diff_intervals:  # Only keep if there are remaining intervals
+                        D1[predicate][entity] = diff_intervals
+                    else:  # Remove entity if no intervals left
+                        del D1[predicate][entity]
+            
+            # Remove predicate if it's now empty
+            if not D1[predicate]:
+                del D1[predicate]
+    # Predicates in D1 that aren't in D2 remain unchanged
+
+def dataset_difference_opt(D_large, D_small):
+    D = defaultdict(lambda: defaultdict(list))
+    # 只处理小数据集中存在的谓词
+    for predicate in D_small:
+        if predicate in D_large:
+            for entity in D_small[predicate]:
+                if entity in D_large[predicate]:
+                    diff = Interval.diff_list_incre(
+                        D_large[predicate][entity], D_small[predicate][entity]
+                    )
+                    if diff:  # 只有有差异时才添加
+                        D[predicate][entity] = diff
+    
+    # 添加大数据集独有的部分
+    for predicate in D_large:
+        if predicate not in D_small:
+            D[predicate] = D_large[predicate]
+        else:
+            for entity in D_large[predicate]:
+                if entity not in D_small[predicate]:
+                    D[predicate][entity] = D_large[predicate][entity]
     return D
 
 def dataset_Same(D1, D2):
