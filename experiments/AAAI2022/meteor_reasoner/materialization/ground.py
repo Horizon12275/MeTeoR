@@ -260,21 +260,24 @@ if __name__ == "__main__":
 
     D = defaultdict(lambda: defaultdict(list))
     D["A"][tuple([Term("mike"), Term("nick")])] = [Interval(3, 4, False, False), Interval(6, 10, True, True)]
+    D["A"][tuple([Term("gg"), Term("nick")])] = [Interval(3, 4, False, False), Interval(6, 10, True, True)]
     D["B"][tuple([Term("nan")])] = [Interval(2, 8, False, False)]
     D_index = build_index(D)
 
     Delta = defaultdict(lambda: defaultdict(list))
     head = Atom("C", tuple([Term("nan")]))
     literal_a = Literal(Atom("A", tuple([Term("Y", "variable"), Term("X", "variable")])), [Operator("Boxminus", Interval(1, 2, False, False))])
-    literal_b = Literal(Atom("B", tuple([Term("nan")])), [Operator("Diamondminus", Interval(0, 1, False, False))])
+    literal_b = Literal(Atom("B", tuple([Term("nan")])), [Operator("Diamondminus", Interval(0, 0.5, False, False))])
 
     body = [literal_a, literal_b]
 
     new_literal = BinaryLiteral(Atom("A", tuple([Term("X", "variable"), Term("Y", "variable")])), Atom("B", tuple([Term("nan")])), Operator("Since", Interval(1, 2, False, False)))
     body.append(new_literal)
 
-    for atom_instance in ground_generator(literal_a, context={}, D=D, D_index=D_index):
+    # for atom_instance in ground_generator(literal_a, context={}, D=D, D_index=D_index):
+    #     print(atom_instance)
+    
+    literal_c = Literal(Atom("A", tuple([Term("Y", "variable"), Term("nick", "constant")])))
+    
+    for atom_instance in ground_generator(literal_c, context={}, D=D, D_index=D_index):
         print(atom_instance)
-
-
-

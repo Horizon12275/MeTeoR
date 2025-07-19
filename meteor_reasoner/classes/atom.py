@@ -31,6 +31,7 @@ class Atom:
     def __str__(self):
         if self.interval:
             if len(self.entity) > 1 or  self.entity[0].name != "nan":
+                print("Atom: " + str(self.predicate) + "(" + ",".join([str(item) for item in self.entity]) + ")@" + str(self.interval))
                 return self.predicate + "(" + ",".join([str(item) for item in self.entity]) + ")@" + str(self.interval)
             else:
                 return self.predicate + "@" + str(self.interval)

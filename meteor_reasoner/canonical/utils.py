@@ -280,14 +280,15 @@ def find_periods(CR):
     print("Finding periods...")
     left_period, left_len = defaultdict(list), 0
     right_period, right_len = defaultdict(list), 0
-    number_mat = 0
+    #number_mat = 0
     while True:
         common_fragment = CommonFragment(CR.base_interval)
         common_fragment.common = Interval(Decimal("-inf"), Decimal("+inf"), True, True)
 
         delta_new = naive_immediate_consequence_operator(D=CR.D, rules=CR.Program, D_index=CR.D_index)
-        # 计算新的推理结果
-        number_mat += 1
+        # # 计算新的推理结果
+        # number_mat += 1
+        # print("Number of materialization:", number_mat)
         diff_delta = []
         terminate_flag = False
         for head_predicate in delta_new:

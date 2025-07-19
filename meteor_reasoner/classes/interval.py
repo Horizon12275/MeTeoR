@@ -58,45 +58,48 @@ class Interval:
         if len(intervals2) == 0:
             return intervals1
 
-        intervals1.sort(key=lambda k: k.left_value)
-        intervals2.sort(key=lambda k: k.left_value)
-        new_interval_list = []
-        i, j = 0, 0
-        while i < len(intervals1) and j < len(intervals2):
-            if intervals1[i].left_value < intervals2[j].left_value:
-                if len(new_interval_list) == 0:
-                    new_interval_list.append(intervals1[i])
+        # Combine and sort all intervals by left value
+        all_intervals = intervals1 + intervals2
+        all_intervals.sort(key=lambda k: k.left_value)
+        
+        if not all_intervals:
+            return []
+        
+        # Initialize result with first interval
+        result = [all_intervals[0]]
+        
+        for current in all_intervals[1:]:
+            last = result[-1]
+            
+            # Check if current interval overlaps or is adjacent to last interval in result
+            if (current.left_value < last.right_value or 
+                (current.left_value == last.right_value and not (current.left_open and last.right_open))):
+                # Merge the intervals
+                new_left = min(last.left_value, current.left_value)
+                new_right = max(last.right_value, current.right_value)
+                
+                # Handle left open
+                if last.left_value < current.left_value:
+                    left_open = last.left_open
+                elif last.left_value > current.left_value:
+                    left_open = current.left_open
                 else:
-                    if Interval.union(new_interval_list[-1], intervals1[i]) is not None:
-                        new_interval_list[-1] = Interval.union(new_interval_list[-1], intervals1[i])
-                    else:
-                        new_interval_list.append(intervals1[i])
-                i += 1
-            else:
-                if len(new_interval_list) == 0:
-                    new_interval_list.append(intervals2[j])
+                    left_open = last.left_open and current.left_open
+                    
+                # Handle right open
+                if last.right_value < current.right_value:
+                    right_open = current.right_open
+                elif last.right_value > current.right_value:
+                    right_open = last.right_open
                 else:
-                    if Interval.union(new_interval_list[-1], intervals2[j]) is not None:
-                        new_interval_list[-1] = Interval.union(new_interval_list[-1], intervals2[j])
-                    else:
-                        new_interval_list.append(intervals2[j])
-                j += 1
-
-        while i < len(intervals1):
-            if Interval.union(new_interval_list[-1], intervals1[i]) is not None:
-                new_interval_list[-1] = Interval.union(new_interval_list[-1], intervals1[i])
+                    right_open = last.right_open and current.right_open
+                    
+                # Replace last interval with merged interval
+                result[-1] = Interval(new_left, new_right, left_open, right_open)
             else:
-                new_interval_list.append(intervals1[i])
-            i += 1
-
-        while j < len(intervals2):
-            if Interval.union(new_interval_list[-1], intervals2[j]) is not None:
-                new_interval_list[-1] = Interval.union(new_interval_list[-1], intervals2[j])
-            else:
-                new_interval_list.append(intervals2[j])
-            j += 1
-
-        return new_interval_list
+                result.append(current)
+        
+        return result
 
     @staticmethod
     def list_intersection(intervals1, intervals2):
@@ -242,6 +245,68 @@ class Interval:
                 new_result.extend(diff_intervals)
             result = new_result
 
+        return result
+
+    @staticmethod
+    def diff_list_incre_opt(t1_list, t2_list):
+        """
+        Return the different part of two interval lists (t1_list - t2_list) in linear time.
+        Both input lists must be sorted by left_value.
+        
+        Args:
+            t1_list: a list of sorted Intervals
+            t2_list: a list of sorted Intervals
+
+        Returns: a list of Intervals representing t1_list - t2_list
+        """
+        if not t2_list:
+            return t1_list
+            
+        result = []
+        i = j = 0
+        n, m = len(t1_list), len(t2_list)
+        
+        while i < n and j < m:
+            t1 = t1_list[i]
+            t2 = t2_list[j]
+            
+            # If t1 is completely before t2, add it to result
+            if t1.right_value < t2.left_value or (
+                t1.right_value == t2.left_value and (t1.right_open or t2.left_open)
+            ):
+                result.append(t1)
+                i += 1
+            # If t2 is completely before t1, skip t2
+            elif t2.right_value < t1.left_value or (
+                t2.right_value == t1.left_value and (t2.right_open or t1.left_open)
+            ):
+                j += 1
+            else:
+                # There is some overlap, compute the difference
+                diff = Interval.diff(t1, [t2])
+                
+                # If t1 was completely removed, move to next t1
+                if not diff:
+                    i += 1
+                else:
+                    # Replace t1 with the first difference part
+                    t1_list[i] = diff[0]
+                    # If there are remaining parts, insert them after current position
+                    if len(diff) > 1:
+                        t1_list[i+1:i+1] = diff[1:]
+                        n += len(diff) - 1
+                    
+                    # Check if we need to reprocess this new interval with same t2
+                    if t1_list[i].right_value < t2.left_value or (
+                        t1_list[i].right_value == t2.left_value and 
+                        (t1_list[i].right_open or t2.left_open)
+                    ):
+                        result.append(t1_list[i])
+                        i += 1
+        
+        # Add any remaining intervals from t1_list
+        result.extend(t1_list[i:])
+        
         return result
 
     @staticmethod
@@ -592,8 +657,8 @@ if __name__ == "__main__":
     # exit()
 
     # b = [Interval(0.0, 0.0, False, False), Interval(2.0, 3.0, False, False)]
-    a = [Interval(0, 3, False, False), Interval(4, 5, False, False)]
-    c = [Interval(2, 2, False, False), Interval(1, 1, False, False)]
+    a = [Interval(4, 5, False, False),Interval(0, 3, False, False)]
+    c = [Interval(1, 2, False, False), Interval(4.5, 5.5, False, False)]
 
     # print([str(item) for item in Interval.diff_list(a, c)])
     # print([str(item) for item in Interval.list_intersection(c, a)])
@@ -605,7 +670,7 @@ if __name__ == "__main__":
     # # ['[2.5,4.0]']
     # c = [Interval(0, 12,   False, False), Interval(21, 64, False, False)]
 
-    print([str(item) for item in Interval.diff_list_incre(a, c)])
+    print([str(item) for item in Interval.diff_list_incre_opt(a, c)])
     # print([str(item) for item in Interval.list_union(a, c)])
     # print(Interval.list_inclusion(c, a))
 

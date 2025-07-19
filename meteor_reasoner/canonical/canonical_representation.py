@@ -4,6 +4,7 @@ from meteor_reasoner.materialization.index_build import *
 from meteor_reasoner.classes.literal import Literal, BinaryLiteral
 import decimal, copy
 from meteor_reasoner.canonical.calculate_w import get_w
+import time
 
 
 class CanonicalRepresentation:
@@ -25,17 +26,14 @@ class CanonicalRepresentation:
         return True
 
     def initilization(self):
+        # Start timer
         t_program = copy.deepcopy(self.Program)
         self.w = 2 * get_w(t_program)
         coalescing_d(self.D)
         build_index(self.D,  self.D_index)
         self.points, self.min_x, self.max_x = get_dataset_points_x(self.D, min_x_flag=True)
-
-        # print("The w is:{}".format(self.w))
-        # print("The maximum number in the database:{}".format(self.max_x))
-        # print("The minimum number in the database:{}".format(self.min_x))
+        
         self.base_interval = Interval(self.min_x, self.max_x, False, False)
         self.z, self.gcd = get_gcd(self.Program)
         self.left_initial_ruler_intervals, self.right_initial_ruler_intervals, self.pattern_num, self.pattern_len = get_initial_ruler_intervals(self.points[:], left_border= self.min_x-self.w, right_border=self.max_x+self.w, gcd=self.gcd)
-
         self.left_dict, self.right_dict = construct_left_right_pattern(self.points, self.gcd)

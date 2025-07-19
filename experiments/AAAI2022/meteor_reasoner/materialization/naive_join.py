@@ -135,52 +135,93 @@ def naive_join(rule, D, delta_new, D_index=None, must_literals=None):
 
 
 if __name__ == "__main__":
+    # D = defaultdict(lambda: defaultdict(list))
+    # D["A"][tuple([Term("mike"), Term("nick")])] = [Interval(3, 4, False, False), Interval(6, 10, True, True)]
+    # D["B"][tuple([Term("nan")])] = [Interval(2, 8, False, False)]
+    # D["P"][tuple([Term("a")])] = [Interval(1, 1, False, False)]
+    # D_index = build_index(D)
+
+    # Delta = defaultdict(lambda: defaultdict(list))
+    # head = Atom("C", tuple([Term("nan")]))
+    # literal_a = Literal(Atom("A", tuple([Term("Y", "variable"), Term("X", "variable")])),
+    #                     [Operator("Boxminus", Interval(1, 2, False, False))])
+    # literal_b = Literal(Atom("B", tuple([Term("nan")])), [Operator("Diamondminus", Interval(0, 1, False, False))])
+
+    # body = [literal_a, literal_b]
+
+    # new_literal = BinaryLiteral(Atom("A", tuple([Term("X", "variable"), Term("Y", "variable")])),
+    #                             Atom("B", tuple([Term("nan")])), Operator("Since", Interval(1, 2, False, False)))
+    # body.append(new_literal)
+    # literal_p = Literal(Atom("P", tuple([Term("X", "variable")])),
+    #                     [Operator("Diamondminus", Interval(1, 1, False, False))])
+    # head_p = Atom("P", tuple([Term("X", "variable")]))
+
+    # rule = Rule(head_p, [literal_p])
+    # i = 0
+    # delta_old = D
+    # while i < 5:
+    #     i += 1
+    #     delta_new = defaultdict(lambda: defaultdict(list))
+    #     naive_join(rule, D=D, delta_new=delta_new, D_index=D_index)
+    #     print("new:")
+    #     print_dataset(delta_new)
+    #     for predicate in delta_new:
+    #         if predicate not in D:
+    #             D[predicate] = delta_new[predicate]
+    #         else:
+    #             for entity in delta_new[predicate]:
+    #                 D[predicate][entity] = D[predicate][entity] + delta_new[predicate][entity]
+    #     coalescing_d(D)
+    #     delta_old = delta_new
+
+    # HeavyWindAffectedState(X):-HeavyWind(Y),LocatedInState(Y,X)
+
     D = defaultdict(lambda: defaultdict(list))
-    D["A"][tuple([Term("mike"), Term("nick")])] = [Interval(3, 4, False, False), Interval(6, 10, True, True)]
-    D["B"][tuple([Term("nan")])] = [Interval(2, 8, False, False)]
-    D["P"][tuple([Term("a")])] = [Interval(1, 1, False, False)]
-    D_index = build_index(D)
+    D["HeavyWindAffectedState"][tuple([Term("shanghai")])] = [Interval(10, 12, False, False)]
 
-    Delta = defaultdict(lambda: defaultdict(list))
-    head = Atom("C", tuple([Term("nan")]))
-    literal_a = Literal(Atom("A", tuple([Term("Y", "variable"), Term("X", "variable")])),
-                        [Operator("Boxminus", Interval(1, 2, False, False))])
-    literal_b = Literal(Atom("B", tuple([Term("nan")])), [Operator("Diamondminus", Interval(0, 1, False, False))])
+    I_minus_D = defaultdict(lambda: defaultdict(list))
+    I_minus_D["HeavyWind"][tuple([Term("pudong")])] = [Interval(10, 11, False, False)]
+    I_minus_D["LocatedInState"][tuple([Term("pudong"), Term("shanghai")])] = [Interval(10.5, 15, False, False)]
 
-    body = [literal_a, literal_b]
+    body = [Literal(Atom("HeavyWind", tuple([Term("Y", "variable")]))),
+            Literal(Atom("LocatedInState", tuple([Term("Y", "variable"), Term("X", "variable")])))]
+    head = Atom("HeavyWindAffectedState", tuple([Term("X", "variable")]))
+    rule = Rule(head, body)
 
-    new_literal = BinaryLiteral(Atom("A", tuple([Term("X", "variable"), Term("Y", "variable")])),
-                                Atom("B", tuple([Term("nan")])), Operator("Since", Interval(1, 2, False, False)))
-    body.append(new_literal)
-    literal_p = Literal(Atom("P", tuple([Term("X", "variable")])),
-                        [Operator("Diamondminus", Interval(1, 1, False, False))])
-    head_p = Atom("P", tuple([Term("X", "variable")]))
+    program = []
+    program.append(rule)
 
-    rule = Rule(head_p, [literal_p])
-    i = 0
-    delta_old = D
-    while i < 5:
-        i += 1
-        delta_new = defaultdict(lambda: defaultdict(list))
-        naive_join(rule, D=D, delta_new=delta_new, D_index=D_index)
-        print("new:")
-        print_dataset(delta_new)
-        for predicate in delta_new:
-            if predicate not in D:
-                D[predicate] = delta_new[predicate]
-            else:
-                for entity in delta_new[predicate]:
-                    D[predicate][entity] = D[predicate][entity] + delta_new[predicate][entity]
-        coalescing_d(D)
-        delta_old = delta_new
+    for predicate in D:
+        for rule in program:
+            if predicate == rule.head.get_predicate():
+                print("Rule: {}".format(rule))
+                # replace the entity in the rule with ground entity in rule head and rule body
+                for entity_list in D[predicate]:
+                    # create context from entity list and original rule head
+                    context = {term.name: entity_list[i].name for i, term in enumerate(rule.head.get_entity()) if term.type == "variable"}
+                    print("Context: {}".format(context))
 
+                    # replace the head entity in the rule with the ground entity
+                    new_rule_head = copy.deepcopy(rule.head)
+                    if len(new_rule_head.get_entity()) > 1 or new_rule_head.get_entity()[0].name != "nan":
+                        new_rule_head.set_entity([Term(context.get(term.name, term.name), term.type) for term in new_rule_head.get_entity()])
+                    else:
+                        new_rule_head.set_entity([Term("nan")])
 
+                    # replace the entity in the body literals according to the context
+                    new_rule_body = []
+                    for literal in rule.body:
+                        new_literal = copy.deepcopy(literal)
+                        if isinstance(new_literal, BinaryLiteral):
+                            new_literal.left_literal.set_entity([Term(context.get(term.name, term.name), term.type) for term in new_literal.left_literal.get_entity()])
+                            new_literal.right_literal.set_entity([Term(context.get(term.name, term.name), term.type) for term in new_literal.right_literal.get_entity()])
+                        else:
+                            new_literal.set_entity([Term(context.get(term.name, term.name), term.type) for term in new_literal.get_entity()])
+                        new_rule_body.append(new_literal)
+                    new_rule = Rule(new_rule_head, new_rule_body)
+                    print("New Rule: {}".format(new_rule))
 
-
-
-
-
-
-
-
-
+                    # Apply the rule to the dataset D
+                    delta_new = defaultdict(lambda: defaultdict(list))
+                    naive_join(new_rule, D=I_minus_D, delta_new=delta_new, D_index=None)
+                    print_dataset(delta_new)

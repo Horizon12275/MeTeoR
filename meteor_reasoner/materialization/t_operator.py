@@ -32,7 +32,7 @@ def incre_seminaive_immediate_consequence_operator(rules, D, D_index, delta_old=
                             # print interval and old_interval
                             # print("\ninterval: ", interval)
                             # print("old_interval: ", old_interval)
-                            new_delta_old[predicate][entity].append(Interval(old_interval.left_value, old_interval.right_value, old_interval.left_open, old_interval.right_open))
+                            new_delta_old[predicate][entity].append(Interval(old_interval.left_value,old_interval.right_value,old_interval.left_open,old_interval.right_open))
                             # print all the intervals in new_delta_old
                             # for interval in new_delta_old[predicate][entity]:
                             #     print("new_delta_old: ", interval)
@@ -63,5 +63,7 @@ def incre_seminaive_immediate_consequence_operator(rules, D, D_index, delta_old=
     # print_dataset(D)
 
     # D_index = build_index(D)
-
+    coalescing_d(new_delta_old)
+    print("The new Delta_D after coalescing is: ")
+    print_dataset(new_delta_old)
     return seminaive_immediate_consequence_operator(rules, D, D_index, new_delta_old)

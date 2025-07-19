@@ -345,6 +345,3 @@ if __name__ == "__main__":
     for t in t4:
         print(t)
     print("end")
-
-
-
