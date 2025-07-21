@@ -143,7 +143,7 @@ def apply(literal, D, delta_old=None):
 
         else:
             pop_operator = literal.operators.pop(0)
-            T0 = apply(literal, D)
+            T0 = apply(literal, D, delta_old)
             literal.operators.insert(0, pop_operator)
             T = []
             if op_name == "Diamondminus":

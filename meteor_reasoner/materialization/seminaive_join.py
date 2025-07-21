@@ -21,8 +21,9 @@ def seminaive_join(rule, D,  delta_old, delta_new, D_index=None):
     head_entity = rule.head.get_entity()
     head_predicate = rule.head.get_predicate()
     literals = rule.body + rule.negative_body
+    delta_old_index = build_index(delta_old) if delta_old is not None else None
 
-    def ground_body(global_literal_index, visited, delta, context):
+    def ground_body(global_literal_index, visited, delta, context, is_left=False, is_right=False):
         #print("ground_body: ", global_literal_index, visited, delta, context)
         if global_literal_index == len(literals):
             T = []
@@ -34,16 +35,51 @@ def seminaive_join(rule, D,  delta_old, delta_new, D_index=None):
                     if grounded_literal.get_predicate() not in ["Bottom", "Top"]:
                         grounded_literal.set_entity(delta[i][0])
                 if i == visited and isinstance(grounded_literal, BinaryLiteral):
-                    t = apply(grounded_literal, D)
+                    op_name = grounded_literal.get_op_name()
+                    t = []
+                    if is_left:
+                        t1_list = apply(grounded_literal.left_literal, delta_old)
+                        t2_list = apply(grounded_literal.right_literal, D)
+                        if op_name == "Until":
+                            if t1_list and t2_list:
+                                for t1 in t1_list:
+                                    for t2 in t2_list:
+                                        tmp_t = until_deduce(grounded_literal, t1, t2)
+                                        if tmp_t:
+                                            t.append(tmp_t)
+                        else:
+                            if t1_list and t2_list:
+                                for t1 in t1_list:
+                                    for t2 in t2_list:
+                                        tmp_t = since_deduce(grounded_literal, t1, t2)
+                                        if tmp_t:
+                                            t.append(tmp_t)
+                    elif is_right:
+                        t1_list = apply(grounded_literal.left_literal, D)
+                        t2_list = apply(grounded_literal.right_literal, delta_old)
+                        if op_name == "Until":
+                            if t1_list and t2_list:
+                                for t1 in t1_list:
+                                    for t2 in t2_list:
+                                        tmp_t = until_deduce(grounded_literal, t1, t2)
+                                        if tmp_t:
+                                            t.append(tmp_t)
+                        else:
+                            if t1_list and t2_list:
+                                for t1 in t1_list:
+                                    for t2 in t2_list:
+                                        tmp_t = since_deduce(grounded_literal, t1, t2)
+                                        if tmp_t:
+                                            t.append(tmp_t)
                     #print("if i == visited and isinstance(grounded_literal, BinaryLiteral): ", t)
                 elif i == visited:
-                    t = apply(grounded_literal, delta_old)
+                    t = apply(grounded_literal, delta_old) # apply to delta
                     #print("if i == visited: ", t)
                 elif i <= visited:
-                    t = apply(grounded_literal, D)
+                    t = apply(grounded_literal, D) # apply to I_union_delta
                     #print("elif i <= visited: ", t)
                 else:
-                    t = apply(grounded_literal, D, delta_old)
+                    t = apply(grounded_literal, D, delta_old) # apply to I
                     #print("else: ", t)
                 if len(t) == 0:
                     break
@@ -107,11 +143,11 @@ def seminaive_join(rule, D,  delta_old, delta_new, D_index=None):
             current_literal = copy.deepcopy(literals[global_literal_index])
             if not isinstance(current_literal, BinaryLiteral):
                 if current_literal.get_predicate() in ["Bottom", "Top"]:
-                    ground_body(global_literal_index+1, visited, delta, context)
+                    ground_body(global_literal_index+1, visited, delta, context, is_left=is_left, is_right=is_right)
                 else:
                     for tmp_entity, tmp_context in ground_generator(current_literal, context, D, D_index, delta_old, global_literal_index==visited, global_literal_index > visited):
                         tmp_delata = {global_literal_index: [tmp_entity]}
-                        ground_body(global_literal_index+1,  visited, {**delta, **tmp_delata}, {**context, **tmp_context})
+                        ground_body(global_literal_index+1,  visited, {**delta, **tmp_delata}, {**context, **tmp_context}, is_left=is_left, is_right=is_right)
 
             else:
                 left_predicate = current_literal.left_literal.get_predicate()
@@ -120,32 +156,40 @@ def seminaive_join(rule, D,  delta_old, delta_new, D_index=None):
                 if left_predicate in ["Bottom", "Top"]:
                     for tmp_entity, tmp_context in ground_generator(current_literal.right_literal, context,  D, D_index, delta_old, global_literal_index==visited, global_literal_index > visited):
                         tmp_delta = {global_literal_index: [tmp_entity]}
-                        ground_body(global_literal_index + 1, visited, {**delta, **tmp_delta}, {**context, **tmp_context})
+                        ground_body(global_literal_index + 1, visited, {**delta, **tmp_delta}, {**context, **tmp_context}, is_left=is_left, is_right=is_right)
 
                 elif right_predicate in ["Bottom", "Top"]:
                     for tmp_entity, tmp_context in ground_generator(current_literal.left_literal, context, D, D_index, delta_old, global_literal_index==visited, global_literal_index > visited):
                         tmp_delta = {global_literal_index: [tmp_entity]}
-                        ground_body(global_literal_index + 1,visited, {**delta, **tmp_delta}, {**context, **tmp_context})
+                        ground_body(global_literal_index + 1,visited, {**delta, **tmp_delta}, {**context, **tmp_context}, is_left=is_left, is_right=is_right)
 
                 else:
                     if global_literal_index == visited:
-                        for left_entity, tmp_context1 in ground_generator(current_literal.left_literal, context, D):
-                            for right_entity, tmp_context2 in ground_generator(current_literal.right_literal, {**context, **tmp_context1},  D):
-                                tmp_delta = {global_literal_index: [left_entity, right_entity]}
-                                ground_body(global_literal_index + 1, visited, {**delta, **tmp_delta}, {**context, **tmp_context1, **tmp_context2})
+                        if is_left:
+                            #print("is_left: ", current_literal.left_literal, current_literal.right_literal)
+                            for left_entity, tmp_context1 in ground_generator(current_literal.left_literal, context, delta_old, delta_old_index):
+                                for right_entity, tmp_context2 in ground_generator(current_literal.right_literal, {**context, **tmp_context1},   D, D_index):
+                                    tmp_delta = {global_literal_index: [left_entity, right_entity]}
+                                    ground_body(global_literal_index + 1, visited, {**delta, **tmp_delta}, {**context, **tmp_context1, **tmp_context2}, is_left=is_left, is_right=is_right)
 
+                        elif is_right:
+                            #print("is_right: ", current_literal.left_literal, current_literal.right_literal)
+                            for left_entity, tmp_context1 in ground_generator(current_literal.left_literal, context, D, D_index):
+                                for right_entity, tmp_context2 in ground_generator(current_literal.right_literal, {**context, **tmp_context1}, delta_old, delta_old_index):
+                                    tmp_delta = {global_literal_index: [left_entity, right_entity]}
+                                    ground_body(global_literal_index + 1, visited, {**delta, **tmp_delta}, {**context, **tmp_context1, **tmp_context2}, is_left=is_left, is_right=is_right)
 
                     elif global_literal_index > visited:
-                        for left_entity, tmp_context1 in ground_generator(current_literal.left_literal, context,  D, D_index, delta_old, global_literal_index==visited, global_literal_index > visited):
-                            for right_entity, tmp_context2 in ground_generator(current_literal.right_literal, {**context, **tmp_context1},   D, D_index, delta_old, global_literal_index==visited, global_literal_index > visited):
+                        for left_entity, tmp_context1 in ground_generator(current_literal.left_literal, context,  D, D_index, delta_old, False, True):
+                            for right_entity, tmp_context2 in ground_generator(current_literal.right_literal, {**context, **tmp_context1},   D, D_index, delta_old, False,True):
                                 tmp_delta = {global_literal_index: [left_entity, right_entity]}
-                                ground_body(global_literal_index + 1, visited, {**delta, **tmp_delta}, {**context, **tmp_context1, **tmp_context2})
+                                ground_body(global_literal_index + 1, visited, {**delta, **tmp_delta}, {**context, **tmp_context1, **tmp_context2}, is_left=is_left, is_right=is_right)
 
                     elif global_literal_index < visited:
-                        for left_entity, tmp_context1 in ground_generator(current_literal.left_literal, context, D):
-                            for right_entity, tmp_context2 in ground_generator(current_literal.right_literal, {**context, **tmp_context1},  D):
+                        for left_entity, tmp_context1 in ground_generator(current_literal.left_literal, context, D, D_index):
+                            for right_entity, tmp_context2 in ground_generator(current_literal.right_literal, {**context, **tmp_context1},  D, D_index):
                                 tmp_delta = {global_literal_index: [left_entity, right_entity]}
-                                ground_body(global_literal_index + 1, visited, {**delta, **tmp_delta}, {**context, **tmp_context1, **tmp_context2})
+                                ground_body(global_literal_index + 1, visited, {**delta, **tmp_delta}, {**context, **tmp_context1, **tmp_context2}, is_left=is_left, is_right=is_right)
 
     if delta_old is None:
         return
@@ -159,9 +203,9 @@ def seminaive_join(rule, D,  delta_old, delta_new, D_index=None):
                 left_predicate = literals[i].left_literal.get_predicate()
                 right_predicate = literals[i].right_literal.get_predicate()
                 if left_predicate in delta_old:
-                    ground_body(0, i, {}, dict())
+                    ground_body(0, i, {}, dict(), is_left=True)
                 elif right_predicate in delta_old:
-                    ground_body(0, i, {}, dict())
+                    ground_body(0, i, {}, dict(), is_right=True)
 
 
 if __name__ == "__main__":

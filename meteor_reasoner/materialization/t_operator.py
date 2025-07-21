@@ -64,6 +64,6 @@ def incre_seminaive_immediate_consequence_operator(rules, D, D_index, delta_old=
 
     # D_index = build_index(D)
     coalescing_d(new_delta_old)
-    print("The new Delta_D after coalescing is: ")
-    print_dataset(new_delta_old)
+    # print("The new Delta_D after coalescing is: ")
+    # print_dataset(new_delta_old)
     return seminaive_immediate_consequence_operator(rules, D, D_index, new_delta_old)
