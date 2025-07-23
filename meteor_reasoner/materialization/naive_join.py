@@ -5,7 +5,6 @@ from collections import defaultdict
 from meteor_reasoner.materialization.index_build import build_index
 from meteor_reasoner.utils.operate_dataset import print_dataset
 from meteor_reasoner.materialization.coalesce import coalescing_d
-from line_profiler import *
 
 def naive_join(rule, D, delta_new, D_index=None):
     """

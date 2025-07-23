@@ -99,6 +99,25 @@ class Interval:
             else:
                 result.append(current)
         
+        # Additional pass to merge adjacent intervals that can be combined
+        if len(result) > 1:
+            final_result = [result[0]]
+            for current in result[1:]:
+                last = final_result[-1]
+                
+                # Check if intervals are adjacent and can be merged
+                if (last.right_value == current.left_value and 
+                    not (last.right_open and current.left_open)):
+                    # Merge them
+                    new_left = last.left_value
+                    new_right = current.right_value
+                    left_open = last.left_open
+                    right_open = current.right_open
+                    final_result[-1] = Interval(new_left, new_right, left_open, right_open)
+                else:
+                    final_result.append(current)
+            return final_result
+        
         return result
 
     @staticmethod

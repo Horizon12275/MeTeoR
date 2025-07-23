@@ -1,6 +1,5 @@
 from meteor_reasoner.materialization.join_util import *
 from meteor_reasoner.materialization.apply import *
-from line_profiler import *
 
 def ground_generator(literal, context, D, D_index=None, delta_old=None, visited=False, flag=False):
     """
