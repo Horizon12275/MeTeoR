@@ -262,6 +262,112 @@ def find_right_period(D, right_interval_range, CR):
     return None, None
 
 
+def find_right_period_incre(D, right_interval_range, CR, varrho_r):
+    big_ruler_intervals, starting_ruler_interval = build_right_ruler_intervals(right_interval_range, CR)
+    big_ruler_intervals = big_ruler_intervals[big_ruler_intervals.index(starting_ruler_interval):]
+    len_big_ruler_intervals = len(big_ruler_intervals)
+
+    len_target_intervals = right_interval_range.right_value - right_interval_range.left_value
+    len_varrho = varrho_r.right_value - varrho_r.left_value
+
+    for i in range(0, len_big_ruler_intervals - 1):
+        if big_ruler_intervals[i].left_open:
+            continue
+        first = big_ruler_intervals[i]
+        try:
+            # 在 big_ruler_intervals 中搜索一个距离为 CR.w 的右端点
+            second_index = big_ruler_intervals.index(
+                Interval(first.left_value + CR.w, first.left_value + CR.w, False, False))
+        except:
+            break
+        # first_interval:[x,x]...[x+CR.w,x+CR.w]
+        first_interval = big_ruler_intervals[i:second_index + 1]
+
+        j = (len_target_intervals - CR.w) % len_varrho
+
+        for k in range(1, j + 1):
+            start_point = first.left_value + k * len_varrho
+            end_point = first.left_value + k * len_varrho + CR.w
+            try:
+                third_index = big_ruler_intervals.index(
+                    Interval(start_point, start_point, False, False))
+                forth_index = big_ruler_intervals.index(
+                    Interval(end_point, end_point, False, False))
+            except:
+                break
+
+            second_interval = big_ruler_intervals[third_index:forth_index + 1]
+            if has_same_pattern(second_interval, first_interval) and has_same_facts(first_interval, second_interval, D):
+                # has_same_pattern检测interval长度、区间开闭性，以及每个ruler的长度
+                # has_same_facts进一步检测事实是否一致
+                varrho_right_dict = defaultdict(list)
+                start_index = first_interval[-1].right_value
+                end_index = second_interval[-1].right_value
+                right_period = Interval(start_index, end_index, True, False)
+
+                for predicate in D:
+                    for entity in D[predicate]:
+                        for ruler in D[predicate][entity]:
+                            intersection_ruler = Interval.intersection(ruler, right_period)
+                            if intersection_ruler:
+                                varrho_right_dict[intersection_ruler].append(str(Atom(predicate, entity)))
+                return right_period, varrho_right_dict
+
+    return None, None
+
+
+def find_left_period_incre(D, left_interval_range, CR, varrho_l):
+    big_ruler_intervals, starting_ruler_interval = build_left_ruler_intervals(left_interval_range, CR)
+    big_ruler_intervals = big_ruler_intervals[0: big_ruler_intervals.index(starting_ruler_interval) + 1]
+    len_big_ruler_intervals = len(big_ruler_intervals)
+
+    len_target_intervals = left_interval_range.right_value - left_interval_range.left_value
+    len_varrho = varrho_l.right_value - varrho_l.left_value
+
+    for i in range(len_big_ruler_intervals - 1, -1, -1):
+        if big_ruler_intervals[i].left_open:
+            continue
+        first = big_ruler_intervals[i]
+        try:
+            second_index = big_ruler_intervals.index(
+                Interval(first.left_value - CR.w, first.left_value - CR.w, False, False))
+        except:
+            break
+
+        first_interval = big_ruler_intervals[second_index: i + 1]
+
+        j = (len_target_intervals - CR.w) % len_varrho
+
+        for k in range(1, j + 1):
+            start_point = first.left_value - k * len_varrho - CR.w
+            end_point = first.left_value - k * len_varrho
+            try:
+                third_index = big_ruler_intervals.index(
+                    Interval(start_point, start_point, False, False))
+                forth_index = big_ruler_intervals.index(
+                    Interval(end_point, end_point, False, False))
+            except:
+                break
+            second_interval = big_ruler_intervals[third_index:forth_index + 1]
+            if has_same_pattern(second_interval, first_interval) and has_same_facts(first_interval, second_interval,
+                                                                                    D):
+                varrho_left_dict = defaultdict(list)
+                start_index = second_interval[0].left_value
+                end_index = first_interval[0].left_value
+
+                left_period = Interval(start_index, end_index, False, True)
+
+                for predicate in D:
+                    for entity in D[predicate]:
+                        for ruler in D[predicate][entity]:
+                            intersection_ruler = Interval.intersection(ruler, left_period)
+                            if intersection_ruler:
+                                varrho_left_dict[intersection_ruler].append(str(Atom(predicate, entity)))
+                return left_period, varrho_left_dict
+
+    return None, None
+
+
 def entail(fact, D):
     if fact.predicate not in D:
         return False
@@ -276,11 +382,12 @@ def entail(fact, D):
             else:
                 return False
 
+
 def find_periods(CR):
     print("Finding periods...")
     left_period, left_len = defaultdict(list), 0
     right_period, right_len = defaultdict(list), 0
-    #number_mat = 0
+    # number_mat = 0
     while True:
         common_fragment = CommonFragment(CR.base_interval)
         common_fragment.common = Interval(Decimal("-inf"), Decimal("+inf"), True, True)
@@ -344,7 +451,8 @@ def find_periods(CR):
                     # just to update index here
                     if tmp_predicate not in CR.D or tmp_entity not in CR.D[tmp_predicate]:
                         try:
-                            CR.D[tmp_predicate][tmp_entity] = CR.D[tmp_predicate][tmp_entity] + delta_new[tmp_predicate][tmp_entity]
+                            CR.D[tmp_predicate][tmp_entity] = CR.D[tmp_predicate][tmp_entity] + \
+                                                              delta_new[tmp_predicate][tmp_entity]
                         except:
                             CR.D[tmp_predicate][tmp_entity] = delta_new[tmp_predicate][tmp_entity]
                         # update index
@@ -384,7 +492,7 @@ def find_periods(CR):
                 for key, value in right_period.items():
                     right_period[key] = coalescing(value)
 
-                return CR.D, common_fragment.common, None, None, None, varrho_right, right_period, right_len#有右周期无左周期
+                return CR.D, common_fragment.common, None, None, None, varrho_right, right_period, right_len  # 有右周期无左周期
         else:
             varrho_left, varrho_left_dict = find_left_period(CR.D, varrho_left_range, CR)
             if varrho_left is not None:
@@ -395,7 +503,7 @@ def find_periods(CR):
                             left_period[value].append(key)
                     for key, value in left_period.items():
                         left_period[key] = coalescing(value)
-                    return CR.D, common_fragment.common, varrho_left, left_period, left_len, None, None, None#有左周期无右周期
+                    return CR.D, common_fragment.common, varrho_left, left_period, left_len, None, None, None  # 有左周期无右周期
 
                 else:
                     varrho_right, varrho_right_dict = find_right_period(CR.D, varrho_right_range, CR)
@@ -413,7 +521,7 @@ def find_periods(CR):
                                 right_period[value].append(key)
                         for key, value in right_period.items():
                             right_period[key] = coalescing(value)
-                        return CR.D, common_fragment.common, varrho_left, left_period, left_len, varrho_right, right_period, right_len#左右均有周期
+                        return CR.D, common_fragment.common, varrho_left, left_period, left_len, varrho_right, right_period, right_len  # 左右均有周期
 
         # 将 delta_new 中的新事实加入 CR.D，并更新索引
         for tmp_predicate in delta_new:
@@ -502,7 +610,8 @@ def find_periods_k(CR):
                     # just to update index here
                     if tmp_predicate not in CR.D or tmp_entity not in CR.D[tmp_predicate]:
                         try:
-                            CR.D[tmp_predicate][tmp_entity] = CR.D[tmp_predicate][tmp_entity] + delta_new[tmp_predicate][tmp_entity]
+                            CR.D[tmp_predicate][tmp_entity] = CR.D[tmp_predicate][tmp_entity] + \
+                                                              delta_new[tmp_predicate][tmp_entity]
                         except:
                             CR.D[tmp_predicate][tmp_entity] = delta_new[tmp_predicate][tmp_entity]
                         # update index
